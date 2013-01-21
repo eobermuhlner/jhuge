@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JHuge JUnit Tests
+Bundle-SymbolicName: ch.obermuhlner.jhuge.test
+Bundle-Version: 0.1.0
+Fragment-Host: ch.obermuhlner.jhuge;bundle-version="0.1.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
