@@ -1,0 +1,204 @@
+package ch.obermuhlner.jhuge.collection.builder;
+
+import java.util.Map;
+
+import ch.obermuhlner.jhuge.converter.Converter;
+import ch.obermuhlner.jhuge.converter.Converters;
+import ch.obermuhlner.jhuge.memory.MemoryManager;
+import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
+
+/**
+ * Abstract base class to implement a {@link MapBuilder} for a huge {@link Map}.
+ *
+ * @param <K> the type of the key in the {@link Map}
+ * @param <V> the type of the value in the {@link Map}
+ */
+public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
+	
+	private Class<K> keyClass;
+
+	private Class<V> valueClass;
+
+	private ClassLoader classLoader;
+
+	private int bufferSize = 100 * MemoryMappedFileManager.MEGABYTES;
+
+	private Integer blockSize;
+	
+	private Converter<K> keyConverter;
+
+	private Converter<V> valueConverter;
+
+	private MemoryManager memoryManager;
+	
+	private boolean prepared;
+
+	/**
+	 * Specifies the {@link ClassLoader} used to deserialize keys and values.
+	 * 
+	 * @param classLoader the {@link ClassLoader} used to deserialize keys and values
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> classLoader(ClassLoader classLoader) {
+		checkPrepared();
+		this.classLoader = classLoader;
+		return this;
+	}
+	
+	/**
+	 * Specifies the type of the keys.
+	 * 
+	 * <p>If the {@link #classLoader(ClassLoader) ClassLoader} is not explicitly specified then this class is used to determine the {@link ClassLoader}.</p>
+	 * <p>If the {@link #key(Converter) key Converter} is not explicitly specified then this class is used to determine the best key {@link Converter}.</p>
+	 * 
+	 * @param keyClass the type of the keys
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> key(Class<K> keyClass) {
+		checkPrepared();
+		this.keyClass = keyClass;
+		return this;
+	}
+	
+	/**
+	 * Specifies the key {@link Converter} used to serialize/deserialize keys.
+	 * 
+	 * @param keyConverter the {@link Converter} used to serialize/deserialize keys
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> key(Converter<K> keyConverter) {
+		checkPrepared();
+		this.keyConverter = keyConverter;
+		return this;
+	}
+	
+	/**
+	 * Specifies the type of the values.
+	 * 
+	 * <p>If the {@link #classLoader(ClassLoader) ClassLoader} is not explicitly specified then this class is used to determine the {@link ClassLoader}.</p>
+	 * <p>If the {@link #value(Converter) value Converter} is not explicitly specified then this class is used to determine the best value {@link Converter}.</p>
+	 * 
+	 * @param valueClass the type of the values
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> value(Class<V> valueClass) {
+		checkPrepared();
+		this.valueClass = valueClass;
+		return this;
+	}
+	
+	/**
+	 * Specifies the value {@link Converter} used to serialize/deserialize keys.
+	 * 
+	 * @param valueConverter the {@link Converter} used to serialize/deserialize values
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> value(Converter<V> valueConverter) {
+		checkPrepared();
+		this.valueConverter = valueConverter;
+		return this;
+	}
+	
+	/**
+	 * Specifies the buffer size used in the {@link MemoryMappedFileManager}.
+	 * 
+	 * @param bufferSize the buffer size
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> bufferSize(int bufferSize) {
+		checkPrepared();
+		this.bufferSize = bufferSize;
+		return this;
+	}
+	
+	/**
+	 * Specifies the block size used in the {@link MemoryMappedFileManager}.
+	 * 
+	 * @param blockSize the block size
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> blockSize(int blockSize) {
+		checkPrepared();
+		this.blockSize = blockSize;
+		return this;
+	}
+
+	/**
+	 * Specifies the {@link MemoryManager} used to store keys and values.
+	 * 
+	 * <p>This overrides any setting of {@link #bufferSize(int)} and {@link #blockSize(int)}.</p>
+	 * 
+	 * @param memoryManager the MemoryManager to store the keys and values 
+	 * @return this {@link MapBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> memoryManager(MemoryManager memoryManager) {
+		checkPrepared();
+		this.memoryManager = memoryManager;
+		return this;
+	}
+
+	private void checkPrepared() {
+		if (prepared) {
+			throw new IllegalStateException("Cannot change the configuration after adding the first element.");
+		}
+	}
+
+	private void prepare() {
+		if (prepared) {
+			return;
+		}
+		
+		if (valueConverter == null) {
+			if (classLoader == null && valueClass != null) {
+				classLoader = valueClass.getClassLoader();
+			}
+
+			valueConverter = Converters.bestConverter(valueClass, classLoader);
+		}
+
+		if (keyConverter == null) {
+			if (classLoader == null && keyClass != null) {
+				classLoader = keyClass.getClassLoader();
+			}
+			
+			keyConverter = Converters.bestConverter(keyClass, classLoader);
+		}
+
+		if (memoryManager == null) {
+			if (blockSize == null) {
+				int serializedKeyLength = keyConverter.serializedLength();
+				int serializedValueLength = valueConverter.serializedLength();
+				blockSize = (serializedKeyLength == serializedValueLength && serializedKeyLength > 0) ? serializedKeyLength : MemoryMappedFileManager.NO_BLOCK_SIZE;
+			}
+			memoryManager = new MemoryMappedFileManager(bufferSize, blockSize);
+		}
+		
+		prepared = true;
+	}
+	
+	protected Converter<K> getKeyConverter() {
+		prepare();
+		
+		return keyConverter;
+	}
+	
+	protected Converter<V> getValueConverter() {
+		prepare();
+		
+		return valueConverter;
+	}
+	
+	protected MemoryManager getMemoryManager() {
+		prepare();
+
+		return memoryManager;
+	}
+}

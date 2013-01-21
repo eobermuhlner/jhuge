@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JHuge
+Bundle-SymbolicName: ch.obermuhlner.jhuge
+Bundle-Version: 0.1.0
+Bundle-Vendor: Eric Obermuhlner
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: org.junit
+Export-Package: ch.obermuhlner.jhuge.collection,
+ ch.obermuhlner.jhuge.collection.builder,
+ ch.obermuhlner.jhuge.converter,
+ ch.obermuhlner.jhuge.memory
