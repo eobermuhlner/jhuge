@@ -280,6 +280,18 @@ public class HugeHashSet<E> extends AbstractSet<E> {
 		}
 		
 		@Override
+		public Builder<E> faster() {
+			super.faster();
+			return this;
+		}
+		
+		@Override
+		public Builder<E> capacity(int capacity) {
+			super.capacity(capacity);
+			return this;
+		}
+				
+		@Override
 		public Builder<E> add(E element) {
 			getSet().add(element);
 			return this;

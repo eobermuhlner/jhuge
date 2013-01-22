@@ -58,7 +58,7 @@ Total: 12 entries                                     |        24 |          608
  * <p>The infrastructure data to quickly access the correct {@link MemoryManager} block of an element
  * is stored in Java objects and occupies Java heap.</p>
  * 
- * <p>The following table shows the heap consumption in normal mode when filled with 10000 strings:</p>
+ * <p>The following table shows the heap consumption in faster mode when filled with 10000 strings:</p>
 <pre>
 Class Name                                            |   Objects | Shallow Heap
 ---------------------------------------------------------------------------------

@@ -36,6 +36,8 @@ public class MeasureHeap {
 	@SuppressWarnings("unused")
 	private static ImmutableHugeHashSet<String> staticImmutableHugeHashSet;
 	@SuppressWarnings("unused")
+	private static ImmutableHugeHashSet<String> staticFastImmutableHugeHashSet;
+	@SuppressWarnings("unused")
 	private static HashMap<Integer, String> staticHashMap;
 	@SuppressWarnings("unused")
 	private static HugeHashMap<Integer, String> staticHugeHashMap;
@@ -55,7 +57,8 @@ public class MeasureHeap {
 		staticArrayList = new ArrayList<String>(dataList);
 		staticHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
 		staticFastHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
-//		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
+		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
+		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
 //		staticHashMap = new HashMap<Integer, String>(dataMap);
 //		staticHugeHashMap = new HugeHashMap.Builder<Integer, String>().bufferSize(bufferSize).putAll(dataMap).build();
 		

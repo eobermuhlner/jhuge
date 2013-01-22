@@ -32,6 +32,84 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * <p>In order to store the keys and values in the {@link MemoryManager} they must be serialized and deserialized to read them.
  * This is done by a {@link Converter} which can be specified in the {@link Builder}.</p>
  * 
+ * <h2>Heap Consumption</h2>
+ * 
+ * <h3>Heap in normal mode</h3>
+ * 
+ * <p>In normal mode the {@link ImmutableHugeHashSet} stores everything in the {@link MemoryManager}
+ * and therefore typically completely outside of the Java heap.</p>
+ * 
+ * <p>The following table shows the heap consumption in normal mode when filled with 10000 strings:</p>
+<pre>
+Class Name                                            | Objects | Shallow Heap
+-------------------------------------------------------------------------------
+java.util.HashMap$Entry[]                             |       1 |           80
+java.lang.Object[]                                    |       1 |           56
+ch.obermuhlner.jhuge.collection.internal.LongIntMap   |       1 |           40
+ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |       1 |           32
+java.util.HashMap$Entry                               |       1 |           24
+ch.obermuhlner.jhuge.collection.internal.HugeIntArray |       1 |           24
+ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet  |       1 |           24
+java.util.ArrayList                                   |       1 |           24
+ch.obermuhlner.jhuge.collection.internal.HugeLongArray|       1 |           24
+java.lang.Integer                                     |       1 |           16
+java.util.HashMap$EntrySet                            |       1 |           16
+java.lang.Long                                        |       1 |           16
+ch.obermuhlner.jhuge.converter.CompactConverter       |       1 |           16
+Total: 13 entries                                     |      13 |          392
+-------------------------------------------------------------------------------
+</pre>
+ * 
+ * <h3>Heap in faster mode</h3>
+ * 
+ * <p>In {@link ImmutableHugeHashSet.Builder#faster() faster} mode the {@link ImmutableHugeHashSet} stores only the elements in the {@link MemoryManager}.</p>
+ * <p>The infrastructure data to quickly access the correct {@link MemoryManager} block of an element
+ * is stored in Java objects and occupies Java heap.</p>
+ * 
+ * <p>The following table shows the heap consumption in faster mode when filled with 10000 strings:</p>
+<pre>
+Class Name                                            |   Objects | Shallow Heap
+---------------------------------------------------------------------------------
+                                                      |           |             
+long[]                                                |         1 |       80,016
+int[]                                                 |         1 |       40,016
+java.util.HashMap$Entry[]                             |         1 |           80
+java.lang.Object[]                                    |         1 |           56
+ch.obermuhlner.jhuge.collection.internal.LongIntMap   |         1 |           40
+ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |         1 |           32
+java.util.HashMap$Entry                               |         1 |           24
+ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet  |         1 |           24
+java.util.ArrayList                                   |         1 |           24
+java.lang.Integer                                     |         1 |           16
+java.util.HashMap$EntrySet                            |         1 |           16
+ch.obermuhlner.jhuge.collection.internal.JavaLongArray|         1 |           16
+java.lang.Long                                        |         1 |           16
+ch.obermuhlner.jhuge.converter.CompactConverter       |         1 |           16
+ch.obermuhlner.jhuge.collection.internal.JavaIntArray |         1 |           16
+Total: 15 entries                                     |        15 |      120,408
+---------------------------------------------------------------------------------
+</pre>
+ * 
+ * <h2>Performance</h2>
+ * 
+ * Performance was measured on a
+<pre>
+Intel(R) Core(TM) i7 CPU       M 620  2.67GHz (4 CPUs), ~2.7GHz
+</pre>
+ * running a
+<pre>
+Java(TM) SE Runtime Environment (build 1.6.0_23-b05)
+Java HotSpot(TM) 64-Bit Server VM (build 19.0-b09, mixed mode)
+</pre>
+ * 
+ * <h3>Performance in normal mode</h3>
+ * 
+ * <img src="doc-files/ImmutableHugeHashSet [compact]_0.95.png"/>
+ * 
+ * <h3>Performance in faster mode</h3>
+ * 
+ * <img src="doc-files/ImmutableHugeHashSet [fast]_0.95.png"/>
+ * 
  * @param <E> the type of elements
  */
 public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
@@ -226,7 +304,18 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 			return this;
 		}
 		
-
+		@Override
+		public Builder<E> faster() {
+			super.faster();
+			return this;
+		}
+		
+		@Override
+		public Builder<E> capacity(int capacity) {
+			super.capacity(capacity);
+			return this;
+		}
+				
 		@Override
 		public Builder<E> addAll(Collection<E> elements) {
 			for (E element : elements) {

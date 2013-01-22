@@ -378,6 +378,18 @@ public class HugeHashMap<K, V> extends AbstractMap<K, V> {
 		}
 		
 		@Override
+		public Builder<K, V> faster() {
+			super.faster();
+			return this;
+		}
+		
+		@Override
+		public Builder<K, V> capacity(int capacity) {
+			super.capacity(capacity);
+			return this;
+		}
+				
+		@Override
 		public Builder<K, V> put(K key, V value) {
 			getMap().put(key, value);
 			return this;
