@@ -28,7 +28,7 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 
 	private boolean faster;
 	
-	private int capacity = 8;
+	private int capacity;
 	
 	private boolean prepared;
 
@@ -136,7 +136,7 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 	 * @return this {@link CollectionBuilder} to chain calls
 	 */
 	public AbstractHugeCollectionBuilder<E> capacity(int capacity) {
-		this.capacity = Math.max(1, capacity);
+		this.capacity = Math.max(this.capacity, capacity);
 		return this;
 	}
 	
@@ -165,6 +165,10 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 				blockSize = serializedLength > 0 ? serializedLength : MemoryMappedFileManager.NO_BLOCK_SIZE;
 			}
 			memoryManager = new MemoryMappedFileManager(bufferSize, blockSize);
+		}
+		
+		if (capacity == 0) {
+			capacity = 8;
 		}
 		
 		prepared = true;

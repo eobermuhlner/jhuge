@@ -231,7 +231,10 @@ public class HugeHashSet<E> extends AbstractSet<E> {
 	 * @param <E> the type of elements
 	 */
 	public static class Builder<E> extends AbstractHugeSetBuilder<E> {
+		
 		private HugeHashSet<E> result;
+		
+		private boolean built;
 		
 		private HugeHashSet<E> getSet() {
 			if (result == null) {
@@ -295,6 +298,10 @@ public class HugeHashSet<E> extends AbstractSet<E> {
 
 		@Override
 		public HugeHashSet<E> build() {
+			if (built) {
+				throw new IllegalStateException("Has already been built.");
+			}
+			built = true;
 			return getSet();
 		}
 	}	

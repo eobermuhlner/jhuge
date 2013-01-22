@@ -13,4 +13,8 @@ public class Dummy_ImmutableHugeHashSetTest extends AbstractImmutableHugeHashSet
 		return new DummyMemoryManager();
 	}
 
+	@Override
+	protected boolean isFaster() {
+		return false;
+	}
 }

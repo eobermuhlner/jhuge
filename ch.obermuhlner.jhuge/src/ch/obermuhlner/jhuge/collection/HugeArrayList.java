@@ -206,7 +206,10 @@ public class HugeArrayList<E> extends AbstractList<E> {
 	 * @param <E> the type of elements
 	 */
 	public static class Builder<E> extends AbstractHugeListBuilder<E> {
+		
 		private HugeArrayList<E> result;
+		
+		private boolean built;
 		
 		private HugeArrayList<E> getList() {
 			if (result == null) {
@@ -282,6 +285,10 @@ public class HugeArrayList<E> extends AbstractList<E> {
 		
 		@Override
 		public HugeArrayList<E> build() {
+			if (built) {
+				throw new IllegalStateException("Has already been built.");
+			}
+			built = true;
 			return getList();
 		}
 	}

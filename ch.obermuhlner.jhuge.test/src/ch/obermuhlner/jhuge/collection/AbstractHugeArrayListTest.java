@@ -24,12 +24,14 @@ public abstract class AbstractHugeArrayListTest extends AbstractListTest {
 	protected <E> List<E> createList(E... initial) {
 		MemoryManager memoryManager = createMemoryManager();
 
-		return new HugeArrayList.Builder<E>()
-				.memoryManager(memoryManager)
-				.faster()
-				.capacity(initial.length)
-				.addAll(initial)
-				.build();
+		HugeArrayList.Builder<E> builder = new HugeArrayList.Builder<E>();
+		builder.memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		builder.capacity(initial.length);
+		builder.addAll(initial);
+		return builder.build();
 	}
 
 	protected abstract boolean isFaster();

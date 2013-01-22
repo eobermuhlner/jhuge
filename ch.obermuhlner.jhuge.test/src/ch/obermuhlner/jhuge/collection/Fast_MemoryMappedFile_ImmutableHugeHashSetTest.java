@@ -6,15 +6,15 @@ import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 /**
  * Tests {@link ImmutableHugeHashSet} with a {@link MemoryMappedFileManager}.
  */
-public class MemoryMappedFile_ImmutableHugeHashSetTest extends AbstractImmutableHugeHashSetTest {
+public class Fast_MemoryMappedFile_ImmutableHugeHashSetTest extends AbstractImmutableHugeHashSetTest {
 
 	@Override
 	protected MemoryManager createMemoryManager() {
-		return new MemoryMappedFileManager(20000);
+		return new MemoryMappedFileManager(150);
 	}
 
 	@Override
 	protected boolean isFaster() {
-		return false;
+		return true;
 	}
 }

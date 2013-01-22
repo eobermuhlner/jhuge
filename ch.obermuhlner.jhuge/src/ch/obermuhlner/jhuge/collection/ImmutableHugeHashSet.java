@@ -13,6 +13,12 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import ch.obermuhlner.jhuge.collection.builder.AbstractHugeSetBuilder;
+import ch.obermuhlner.jhuge.collection.internal.HugeIntArray;
+import ch.obermuhlner.jhuge.collection.internal.HugeLongArray;
+import ch.obermuhlner.jhuge.collection.internal.IntArray;
+import ch.obermuhlner.jhuge.collection.internal.JavaIntArray;
+import ch.obermuhlner.jhuge.collection.internal.JavaLongArray;
+import ch.obermuhlner.jhuge.collection.internal.LongArray;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
@@ -33,10 +39,10 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 	private final MemoryManager memoryManager;
 	private final Converter<E> converter;
 
-	private final int[] elementHashCodes;
-	private final long[] elementAddresses;
+	private final IntArray elementHashCodes;
+	private final LongArray elementAddresses;
 
-	private ImmutableHugeHashSet(MemoryManager memoryManager, Converter<E> converter, int[] elementHashCodes, long[] elementAddresses) {
+	private ImmutableHugeHashSet(MemoryManager memoryManager, Converter<E> converter, IntArray elementHashCodes, LongArray elementAddresses) {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
 		this.elementHashCodes = elementHashCodes;
@@ -77,7 +83,7 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 
 		// check equals() of left of first matching element (as long hash code matches)
 		int index = matchingIndex - 1;
-		while (index >= 0 && elementHashCodes[index] == hashCode) {
+		while (index >= 0 && elementHashCodes.get(index) == hashCode) {
 			if (equalsElementAtIndex(object, index)) {
 				return true;
 			}
@@ -86,7 +92,7 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 
 		// check equals() of right of first matching element (as long hash code matches)
 		index = matchingIndex + 1;
-		while (index < elementHashCodes.length && elementHashCodes[index] == hashCode) {
+		while (index < elementHashCodes.size() && elementHashCodes.get(index) == hashCode) {
 			if (equalsElementAtIndex(object, index)) {
 				return true;
 			}
@@ -97,7 +103,7 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 	}
 	
 	private boolean equalsElementAtIndex(Object object, int index) {
-		byte[] data = memoryManager.read(elementAddresses[index]);
+		byte[] data = memoryManager.read(elementAddresses.get(index));
 		E element = deserializeElement(data);
 	
 		return object == null ? element == null : object.equals(element);
@@ -105,10 +111,10 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 
 	private int indexOfMatchingHashCode(int theElementHashCode) {
 		int aStartIndex = 0;
-		int aEndIndex = elementHashCodes.length - 1;
+		int aEndIndex = elementHashCodes.size() - 1;
 		while (aEndIndex >= aStartIndex) {
 			int aMidIndex = (aStartIndex + aEndIndex) / 2;
-			int aMidIndexHashCode = elementHashCodes[aMidIndex];
+			int aMidIndexHashCode = elementHashCodes.get(aMidIndex);
 
 			if (theElementHashCode < aMidIndexHashCode) {
 				aEndIndex = aMidIndex - 1;
@@ -131,7 +137,7 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 
 	@Override
 	public int size() {
-		return elementHashCodes.length;
+		return elementHashCodes.size();
 	}
 	
 	@Override
@@ -149,16 +155,16 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 		
 		@Override
 		public boolean hasNext() {
-			return index < elementAddresses.length;
+			return index < elementAddresses.size();
 		}
 
 		@Override
 		public E next() {
-			if (index >= elementAddresses.length) {
+			if (index >= elementAddresses.size()) {
 				throw new NoSuchElementException();
 			}
 			
-			byte[] data = memoryManager.read(elementAddresses[index]);
+			byte[] data = memoryManager.read(elementAddresses.get(index));
 			index++;
 			E element = deserializeElement(data);
 			return element;
@@ -181,6 +187,8 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 		private static final byte[] EMPTY_DATA = new byte[0];
 		
 		private final List<Entry> entries = new ArrayList<Entry>();
+
+		private boolean built;
 
 		@Override
 		public Builder<E> classLoader(ClassLoader classLoader) {
@@ -273,6 +281,11 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 		
 		@Override
 		public ImmutableHugeHashSet<E> build() {
+			if (built) {
+				throw new IllegalStateException("Has already been built.");
+			}
+			built = true;
+
 			// sort entries by size - O(n * log(n))
 			Collections.sort(entries, new Comparator<Entry>() {
 				@Override
@@ -305,12 +318,12 @@ public class ImmutableHugeHashSet<E> extends AbstractSet<E> {
 			}
 			
 			int size = entries.size();
-			int[] hashCodes =  new int[size];
-			long[] addresses = new long[size];
+			IntArray hashCodes = isFaster() ? new JavaIntArray(size) : new HugeIntArray(getMemoryManager(), size);
+			LongArray addresses = isFaster() ? new JavaLongArray(size) : new HugeLongArray(getMemoryManager(), size);
 			for (int i = 0; i < size; i++) {
 				Entry entry = entries.get(i);
-				hashCodes[i] = entry.hashCode;
-				addresses[i] = entry.address;
+				hashCodes.add(entry.hashCode);
+				addresses.add(entry.address);
 			}
 			
 			return new ImmutableHugeHashSet<E>(getMemoryManager(), getElementConverter(), hashCodes, addresses);

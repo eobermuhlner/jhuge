@@ -31,6 +31,10 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 
 	private MemoryManager memoryManager;
 	
+	private boolean faster;
+	
+	private int capacity;
+	
 	private boolean prepared;
 
 	/**
@@ -145,6 +149,31 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 		return this;
 	}
 
+	/**
+	 * Specifies that the created huge map is allowed to trade other resources (typically Java heap memory) to gain speed improvements.
+	 * 
+	 * <p>This is a hint and may or may not be ignored.</p>
+	 * 
+	 * @return this {@link MapBuilder} to chain calls
+	 */
+	public AbstractHugeMapBuilder<K, V> faster() {
+		faster = true;
+		return this;
+	}
+	
+	/**
+	 * Specifies that the created huge map should be initialized for the specified capacity.
+	 * 
+	 * <p>This is a hint and may or may not be ignored.</p>
+	 * 
+	 * @param capacity the initial capacity 
+	 * @return this {@link MapBuilder} to chain calls
+	 */
+	public AbstractHugeMapBuilder<K, V> capacity(int capacity) {
+		this.capacity = Math.max(this.capacity, capacity);
+		return this;
+	}
+		
 	private void checkPrepared() {
 		if (prepared) {
 			throw new IllegalStateException("Cannot change the configuration after adding the first element.");
@@ -181,6 +210,10 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 			memoryManager = new MemoryMappedFileManager(bufferSize, blockSize);
 		}
 		
+		if (capacity == 0) {
+			capacity = 8;
+		}
+
 		prepared = true;
 	}
 	

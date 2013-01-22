@@ -15,6 +15,6 @@ public class MemoryMappedFile_HugeArrayListTest extends AbstractHugeArrayListTes
 
 	@Override
 	protected boolean isFaster() {
-		return true;
+		return false;
 	}
 }
