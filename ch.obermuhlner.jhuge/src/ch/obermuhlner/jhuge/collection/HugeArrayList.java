@@ -178,7 +178,12 @@ public class HugeArrayList<E> extends AbstractList<E> {
 
 	@Override
 	public void clear() {
-		super.clear();
+		for (int i = 0; i < addresses.size(); i++) {
+			long address = addresses.get(i);
+			memoryManager.free(address);
+		}
+		addresses.clear();
+		
 		//memoryManager.compact();
 	}
 	

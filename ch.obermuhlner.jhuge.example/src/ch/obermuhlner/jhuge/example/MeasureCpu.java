@@ -23,7 +23,9 @@ public class MeasureCpu {
 	private static void testMeasureClear() {
 		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().build();
 		
-		list.add(1);
+		for (int i = 0; i < 10000; i++) {
+			list.add(i);
+		}
 		
 		StopWatch stopWatch = new StopWatch();
 		list.clear();
