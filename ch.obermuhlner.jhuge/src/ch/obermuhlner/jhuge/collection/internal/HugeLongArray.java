@@ -9,6 +9,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  */
 public class HugeLongArray implements LongArray {
 
+	private static final int ELEMENT_SIZE = 8;
+	
 	private final MemoryManager memoryManager;
 
 	private long address;
@@ -33,7 +35,7 @@ public class HugeLongArray implements LongArray {
 	public HugeLongArray(MemoryManager memoryManager, int capacity) {
 		this.memoryManager = memoryManager;
 		
-		address = memoryManager.allocate(capacity * 8);
+		address = memoryManager.allocate(capacity * ELEMENT_SIZE);
 	}
 	
 	@Override
@@ -42,9 +44,9 @@ public class HugeLongArray implements LongArray {
 		
 		byte[] data = memoryManager.read(address);
 		ByteBuffer wrap = ByteBuffer.wrap(data);
-		wrap.position(index * 8);
+		wrap.position(index * ELEMENT_SIZE);
 		long oldValue = wrap.getLong();
-		wrap.position(index * 8);
+		wrap.position(index * ELEMENT_SIZE);
 		wrap.putLong(value);
 
 		memoryManager.write(address, data);
@@ -65,20 +67,20 @@ public class HugeLongArray implements LongArray {
 
 	private void addInternal(int index, long value) {
 		byte[] data = memoryManager.read(address);
-		if (data.length > size * 8) {
+		if (data.length > size * ELEMENT_SIZE) {
 			// move in block
-			System.arraycopy(data, index * 8, data, index * 8 + 8, (size - index) * 8);
+			System.arraycopy(data, index * ELEMENT_SIZE, data, index * ELEMENT_SIZE + ELEMENT_SIZE, (size - index) * ELEMENT_SIZE);
 			ByteBuffer wrap = ByteBuffer.wrap(data);
-			wrap.position(index * 8);
+			wrap.position(index * ELEMENT_SIZE);
 			wrap.putLong(value);
 			memoryManager.write(address, data);
 		} else {
 			// copy into new block
 			byte[] newData = new byte[data.length * 2];
-			System.arraycopy(data, 0, newData, 0, index * 8);
-			System.arraycopy(data, index * 8, newData, index * 8 + 8, (size - index) * 8);
+			System.arraycopy(data, 0, newData, 0, index * ELEMENT_SIZE);
+			System.arraycopy(data, index * ELEMENT_SIZE, newData, index * ELEMENT_SIZE + ELEMENT_SIZE, (size - index) * ELEMENT_SIZE);
 			ByteBuffer wrap = ByteBuffer.wrap(newData);
-			wrap.position(index * 8);
+			wrap.position(index * ELEMENT_SIZE);
 			wrap.putLong(value);
 			memoryManager.free(address);
 			address = memoryManager.allocate(newData);
@@ -93,7 +95,7 @@ public class HugeLongArray implements LongArray {
 
 		byte[] data = memoryManager.read(address);
 		ByteBuffer wrap = ByteBuffer.wrap(data);
-		wrap.position(index * 8);
+		wrap.position(index * ELEMENT_SIZE);
 		long value = wrap.getLong();
 		return value;
 	}
@@ -104,10 +106,10 @@ public class HugeLongArray implements LongArray {
 
 		byte[] data = memoryManager.read(address);
 		ByteBuffer wrap = ByteBuffer.wrap(data);
-		wrap.position(index * 8);
+		wrap.position(index * ELEMENT_SIZE);
 		long oldValue = wrap.getLong();
-		System.arraycopy(data, 0, data, 0, index * 8);
-		System.arraycopy(data, index * 8 + 8, data, index * 8, (size - index - 1) * 8);
+		System.arraycopy(data, 0, data, 0, index * ELEMENT_SIZE);
+		System.arraycopy(data, index * ELEMENT_SIZE + ELEMENT_SIZE, data, index * ELEMENT_SIZE, (size - index - 1) * ELEMENT_SIZE);
 		memoryManager.write(address, data);
 		
 		size--;
