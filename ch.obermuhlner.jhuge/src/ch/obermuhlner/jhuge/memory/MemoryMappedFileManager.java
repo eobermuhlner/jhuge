@@ -216,10 +216,11 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	public void reset() {
 		freeBlocks.clear();
 		emptyBlockAddress = -1;
-		for (ByteBuffer buffer : buffers) {
-			destroyDirectByteBuffer(buffer);
+		for (int i = 0; i < buffers.size(); i++) {
+			//destroyDirectByteBuffer(buffer);
+			initFreeBuffer(i, buffers.get(i));
 		}
-		buffers.clear();
+		//buffers.clear();
 	}
 	
 	/**
@@ -230,11 +231,13 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	* easy to OutOfMemoryError yourself using DirectByteBuffers. This function
 	* explicitly calls the Cleaner method of a DirectByteBuffer.
 	* 
+	* http://stackoverflow.com/questions/1854398/how-to-garbage-collect-a-direct-buffer-java
+	*  
 	* @param toBeDestroyed
 	*          The DirectByteBuffer that will be "cleaned". Utilizes reflection.
-	*          
 	*/
-	public static void destroyDirectByteBuffer(ByteBuffer toBeDestroyed) {
+	@SuppressWarnings("unused")
+	private static void destroyDirectByteBuffer(ByteBuffer toBeDestroyed) {
 		try {
 			Method cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
 			cleanerMethod.setAccessible(true);
@@ -373,13 +376,18 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 	private void addMemoryMappedFile() {
 			ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
+			assert buffer.capacity() == bufferSize;
+			initFreeBuffer(buffers.size(), buffer);
+			buffers.add(buffer);
+	}
+	
+	private void initFreeBuffer(int bufferIndex, ByteBuffer buffer) {
 			int bufferLength = bufferSize - 4;
 			buffer.clear();
 			buffer.putInt(bufferLength);
 
-			long blockAddress = buffers.size() * bufferSize;
+			long blockAddress = bufferIndex * bufferSize;
 			addFreeBlock(blockAddress, bufferLength);
-			buffers.add(buffer);
 	}
 
 	private void addFreeBlock(long address, int length) {

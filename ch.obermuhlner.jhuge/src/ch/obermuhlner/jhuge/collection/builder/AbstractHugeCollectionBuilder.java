@@ -25,6 +25,10 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 	private Converter<E> elementConverter;
 
 	private MemoryManager memoryManager;
+
+	private boolean faster;
+	
+	private int capacity = 8;
 	
 	private boolean prepared;
 
@@ -111,6 +115,31 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 		return this;
 	}
 	
+	/**
+	 * Specifies that the created huge collection is allowed to trade other resources (typically Java heap memory) to gain speed improvements.
+	 * 
+	 * <p>This is a hint and may or may not be ignored.</p>
+	 * 
+	 * @return this {@link CollectionBuilder} to chain calls
+	 */
+	public AbstractHugeCollectionBuilder<E> faster() {
+		faster = true;
+		return this;
+	}
+	
+	/**
+	 * Specifies that the created huge collection should be initialized for the specified capacity.
+	 * 
+	 * <p>This is a hint and may or may not be ignored.</p>
+	 * 
+	 * @param capacity the initial capacity 
+	 * @return this {@link CollectionBuilder} to chain calls
+	 */
+	public AbstractHugeCollectionBuilder<E> capacity(int capacity) {
+		this.capacity = Math.max(1, capacity);
+		return this;
+	}
+	
 	private void checkPrepared() {
 		if (prepared) {
 			throw new IllegalStateException("Cannot change the configuration after adding the first element.");
@@ -151,5 +180,17 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 		prepare();
 
 		return memoryManager;
+	}
+	
+	protected boolean isFaster() {
+		prepare();
+		
+		return faster;
+	}
+	
+	protected int getCapacity() {
+		prepare();
+		
+		return capacity;
 	}
 }

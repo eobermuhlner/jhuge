@@ -12,5 +12,9 @@ public class Dummy_HugeArrayListTest extends AbstractHugeArrayListTest {
 	protected MemoryManager createMemoryManager() {
 		return new DummyMemoryManager();
 	}
-
+	
+	@Override
+	protected boolean isFaster() {
+		return false;
+	}
 }

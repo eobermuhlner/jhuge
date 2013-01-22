@@ -511,8 +511,8 @@ public abstract class AbstractCollectionTest {
 			assertEquals(testdata.size(), collection.size());
 
 			for (String string : testdata) {
-				assertEquals(true, collection.contains(string));
-				assertEquals(false, collection.contains("unknown:" + string));
+				assertEquals(string, true, collection.contains(string));
+				assertEquals("unknown:" + string, false, collection.contains("unknown:" + string));
 			}
 		}
 	}
@@ -526,6 +526,8 @@ public abstract class AbstractCollectionTest {
 			
 			final int count = 1000;
 			for (int i = 0; i < count; i++) {
+				String desc = "step=" + i;
+				
 				String r = String.valueOf(random.nextInt(100));
 				if (supportsNullValues()) {
 					if (random.nextInt(100) == 0) {
@@ -535,22 +537,30 @@ public abstract class AbstractCollectionTest {
 
 				int operation = random.nextInt(100);
 				if (operation <= 1) {
+					//System.out.println(desc + " : clear()");
 					collection.clear();
-					assertEquals(0, collection.size());
-					assertEquals(true, collection.isEmpty());
+					assertEquals(desc, 0, collection.size());
+					assertEquals(desc, true, collection.isEmpty());
 
 				} else if (operation <= 5) {
 					int step = random.nextInt(3) + 3;
+					//System.out.println(desc + " : remove every " + step);
 					removeEveryFewElements(collection.iterator(), step);
 
 
 				} else if (operation <= 50) {
+					//System.out.println(desc + " : add(" + r + ")");
 					collection.add(r);
-					assertEquals(true, collection.contains(r));
-					assertEquals(false, collection.isEmpty());
+					assertEquals(desc, true, collection.contains(r));
+					assertEquals(desc, false, collection.isEmpty());
 					
 				} else if (operation <= 100) {
-					collection.remove(r);
+					//System.out.println(desc + " : remove(" + r + ")");
+					boolean found = collection.contains(r);
+					int oldSize = collection.size();
+					assertEquals(desc, found, collection.remove(r));
+					int newSize = found ? oldSize - 1 : oldSize;
+					assertEquals(desc, newSize, collection.size());
 				}
 			}
 		}
