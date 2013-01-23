@@ -217,30 +217,55 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 		prepared = true;
 	}
 	
+	/**
+	 * Returns the key {@link Converter}.
+	 * 
+	 * @return the key {@link Converter}
+	 */
 	protected Converter<K> getKeyConverter() {
 		prepare();
 		
 		return keyConverter;
 	}
 	
+	/**
+	 * Returns the value {@link Converter}.
+	 * 
+	 * @return the value {@link Converter}
+	 */
 	protected Converter<V> getValueConverter() {
 		prepare();
 		
 		return valueConverter;
 	}
 	
+	/**
+	 * Returns the {@link MemoryManager}.
+	 * 
+	 * @return the {@link MemoryManager}
+	 */
 	protected MemoryManager getMemoryManager() {
 		prepare();
 
 		return memoryManager;
 	}
 
+	/**
+	 * Returns whether the faster mode was specified in the builder.
+	 * 
+	 * @return <code>true</code> if faster, <code>false</code> otherwise
+	 */
 	protected boolean isFaster() {
 		prepare();
 		
 		return faster;
 	}
 	
+	/**
+	 * Returns the initial capacity.
+	 * 
+	 * @return the initial capacity
+	 */
 	protected int getCapacity() {
 		prepare();
 		

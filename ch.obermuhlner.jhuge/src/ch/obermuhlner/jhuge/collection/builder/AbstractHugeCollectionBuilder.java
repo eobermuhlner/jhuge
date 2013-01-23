@@ -174,24 +174,44 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 		prepared = true;
 	}
 	
+	/**
+	 * Returns the element {@link Converter}.
+	 * 
+	 * @return the element {@link Converter}
+	 */
 	protected Converter<E> getElementConverter() {
 		prepare();
 		
 		return elementConverter;
 	}
 	
+	/**
+	 * Returns the {@link MemoryManager}.
+	 * 
+	 * @return the {@link MemoryManager}
+	 */
 	protected MemoryManager getMemoryManager() {
 		prepare();
 
 		return memoryManager;
 	}
 	
+	/**
+	 * Returns whether the faster mode was specified in the builder.
+	 * 
+	 * @return <code>true</code> if faster, <code>false</code> otherwise
+	 */
 	protected boolean isFaster() {
 		prepare();
 		
 		return faster;
 	}
 	
+	/**
+	 * Returns the initial capacity.
+	 * 
+	 * @return the initial capacity
+	 */
 	protected int getCapacity() {
 		prepare();
 		
