@@ -234,4 +234,16 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 
 		return memoryManager;
 	}
+
+	protected boolean isFaster() {
+		prepare();
+		
+		return faster;
+	}
+	
+	protected int getCapacity() {
+		prepare();
+		
+		return capacity;
+	}
 }
