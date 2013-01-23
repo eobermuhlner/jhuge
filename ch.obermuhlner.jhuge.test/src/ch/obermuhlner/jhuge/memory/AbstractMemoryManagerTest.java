@@ -9,6 +9,11 @@ import org.junit.Test;
  */
 public abstract class AbstractMemoryManagerTest {
 
+	/**
+	 * Creates the {@link MemoryManager} to test.
+	 * 
+	 * @return the created {@link MemoryManager}
+	 */
 	protected abstract MemoryManager createMemoryManager();
 	
 	/**

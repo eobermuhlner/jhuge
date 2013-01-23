@@ -16,6 +16,11 @@ public abstract class AbstractMutableMapTest extends AbstractMapTest {
 		return map;
 	}
 
+	/**
+	 * Creates an empty {@link Map} to test.
+	 * 
+	 * @return the created {@link Map}
+	 */
 	protected abstract <K, V> Map<K, V> createEmptyMap();
 
 	@Override

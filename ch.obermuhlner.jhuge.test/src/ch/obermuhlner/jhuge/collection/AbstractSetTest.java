@@ -17,6 +17,12 @@ public abstract class AbstractSetTest extends AbstractCollectionTest {
 		return createSet(initial);
 	}
 	
+	/**
+	 * Creates a {@link Set} filled with the specified initial elements to test.
+	 * 
+	 * @param initial the initial elements to be added to the created {@link Set}
+	 * @return the created {@link Set}
+	 */
 	protected abstract <T> Set<T> createSet(T... initial);
 
 	/**
