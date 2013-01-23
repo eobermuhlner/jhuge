@@ -1,76 +1,59 @@
 package ch.obermuhlner.jhuge.collection;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
-import ch.obermuhlner.jhuge.collection.builder.AbstractHugeSetBuilder;
+import ch.obermuhlner.jhuge.collection.builder.AbstractHugeListBuilder;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
 /**
- * A {@link Set} that stores elements in a {@link MemoryManager}.
+ * An immutable {@link List} that stores elements in a {@link MemoryManager}.
  * 
- * <p>The implementation mimics a {@link HashSet}.</p>
+ * <p>The mutating operations throw {@link UnsupportedOperationException}:</p>
+ * <ul>
+ * <li> {@link #set(int, Object)}</li>
+ * <li> {@link #add(Object)}</li>
+ * <li> {@link #add(int, Object)}</li>
+ * <li> {@link #addAll(Collection)}</li>
+ * <li> {@link #addAll(int, Collection)}</li>
+ * <li> {@link #remove(int)}</li>
+ * <li> {@link #remove(Object)}</li>
+ * <li> {@link #removeAll(Collection)}</li>
+ * <li> {@link #clear()}</li>
+ * </ul>
  * 
- * <p>Access to single elements is O(1).</p>
+ * <p>In order to create an {@link ImmutableHugeArrayList} you must add the elements in the {@link Builder}.</p>
  * 
- * <p>In order to store the keys and values in the {@link MemoryManager} they must be serialized and deserialized to read them.
- * This is done by a {@link Converter} which can be specified in the {@link Builder}.</p>
+ * <p>Other than the mutating operations all semantics, memory consumption and performance are identical to {@link HugeArrayList}.</p>
  * 
  * @param <E> the type of elements
+ * @see HugeArrayList
  */
-public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
+public class ImmutableHugeArrayList<E> extends AbstractHugeArrayList<E> {
 
-	private HugeHashSet(MemoryManager memoryManager, Converter<E> converter) {
-		super(memoryManager, converter);
-	}
-
-	@Override
-	public boolean add(E element) {
-		return addInternal(element);
-	}
-	
-	@Override
-	public boolean remove(Object element) {
-		return removeInternal(element);
+	protected ImmutableHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
+		super(memoryManager, converter, faster, capacity);
 	}
 
-	@Override
-	public void clear() {
-		clearInternal();
-	}
-	@Override
-	public Iterator<E> iterator() {
-		return new HugeHashSetIterator();
-	}
-
-	private class HugeHashSetIterator extends AbstractHugeHashSetIterator {
-		@Override
-		public void remove() {
-			removeInternal();
-		}
-	}
-	
 	/**
-	 * Builds a {@link HugeHashSet}.
-	 *
+	 * Builds a {@link ImmutableHugeArrayList}.
+	 * 
 	 * @param <E> the type of elements
 	 */
-	public static class Builder<E> extends AbstractHugeSetBuilder<E> {
+	public static class Builder<E> extends AbstractHugeListBuilder<E> {
 		
-		private HugeHashSet<E> result;
+		private ImmutableHugeArrayList<E> result;
 		
 		private boolean built;
 		
-		private HugeHashSet<E> getSet() {
+		private ImmutableHugeArrayList<E> getList() {
 			if (result == null) {
-				result = new HugeHashSet<E>(getMemoryManager(), getElementConverter());
+				result = new ImmutableHugeArrayList<E>(getMemoryManager(), getElementConverter(), isFaster(), getCapacity());
 			}
 			return result;
 		}
-		
+
 		@Override
 		public Builder<E> classLoader(ClassLoader classLoader) {
 			super.classLoader(classLoader);
@@ -121,7 +104,8 @@ public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
 				
 		@Override
 		public Builder<E> add(E element) {
-			getSet().add(element);
+			ImmutableHugeArrayList<E> list = getList();
+			list.addInternal(list.size(), element);
 			return this;
 		}
 		
@@ -140,14 +124,14 @@ public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
 			}
 			return this;
 		}
-
+		
 		@Override
-		public HugeHashSet<E> build() {
+		public ImmutableHugeArrayList<E> build() {
 			if (built) {
 				throw new IllegalStateException("Has already been built.");
 			}
 			built = true;
-			return getSet();
+			return getList();
 		}
-	}	
+	}
 }

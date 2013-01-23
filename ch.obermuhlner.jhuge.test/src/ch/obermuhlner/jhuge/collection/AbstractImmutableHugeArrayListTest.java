@@ -4,29 +4,38 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 
 import org.junit.Test;
 
-import ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet.Builder;
+import ch.obermuhlner.jhuge.collection.ImmutableHugeArrayList.Builder;
 import ch.obermuhlner.jhuge.converter.Converters;
 import ch.obermuhlner.jhuge.converter.IntegerConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
 /**
- * Abstract base class to test {@link ImmutableHugeHashSet}.
+ * Abstract base class to test {@link ImmutableHugeArrayList}.
  */
 @SuppressWarnings("javadoc")
-public abstract class AbstractImmutableHugeHashSetTest extends AbstractSetTest {
+public abstract class AbstractImmutableHugeArrayListTest extends AbstractListTest {
 
 	@Override
-	protected <E> Set<E> createSet(E... initial) {
+	protected <E> List<E> createList(E... initial) {
 		MemoryManager memoryManager = createMemoryManager();
 
-		return new ImmutableHugeHashSet.Builder<E>().memoryManager(memoryManager).addAll(initial).build();
+		ImmutableHugeArrayList.Builder<E> builder = new ImmutableHugeArrayList.Builder<E>();
+		builder.memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		builder.capacity(initial.length);
+		builder.addAll(initial);
+		return builder.build();
 	}
 
+	protected abstract boolean isFaster();
+	
 	protected abstract MemoryManager createMemoryManager();
 
 	@Override
@@ -38,71 +47,71 @@ public abstract class AbstractImmutableHugeHashSetTest extends AbstractSetTest {
 	protected boolean supportsNullValues() {
 		return true;
 	}
-
+	
 	@Test
 	public void testBuilder_default() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		assertEquals(true, list.getElementConverter().getClass().isAssignableFrom(Converters.bestConverter(null).getClass()));
 	}
 		
 	@Test
 	public void testBuilder_classLoader() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().classLoader(getClass().getClassLoader()).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().classLoader(getClass().getClassLoader()).build();
 		assertNotNull(list);
 	}
 	
 	@Test
 	public void testBuilder_elementClass() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().element(Integer.class).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().element(Integer.class).build();
 		assertEquals(true, (list.getElementConverter() instanceof IntegerConverter));
 		assertEquals(true, list.getElementConverter().getClass().isAssignableFrom(Converters.bestConverter(Integer.class).getClass()));
 	}
 
 	@Test
 	public void testBuilder_elementConverter() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().element(new IntegerConverter()).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().element(new IntegerConverter()).build();
 		assertEquals(true, (list.getElementConverter() instanceof IntegerConverter));
 	}
 
 	@Test
 	public void testBuilder_bufferSize() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().bufferSize(1234).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().bufferSize(12345).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(1234, memoryManager.getBufferSize());
+		assertEquals(12345, memoryManager.getBufferSize());
 	}
 
 	@Test
 	public void testBuilder_blockSize() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().blockSize(3456).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().blockSize(34567).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(3456, memoryManager.getBlockSize());
+		assertEquals(34567, memoryManager.getBlockSize());
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void testBuilder_prepare() {
-		Builder<Integer> builder = new ImmutableHugeHashSet.Builder<Integer>();
+		Builder<Integer> builder = new ImmutableHugeArrayList.Builder<Integer>();
 		builder.add(1);
 		builder.element(Integer.class);
 	}
 
 	@Test
 	public void testBuilder_add() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().memoryManager(createMemoryManager()).add(1).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().memoryManager(createMemoryManager()).add(1).build();
 		assertEquals(1, list.size());
 	}
 
 	@Test
 	public void testBuilder_addAll_vararg() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().memoryManager(createMemoryManager()).addAll(1, 2, 3).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().memoryManager(createMemoryManager()).addAll(1, 2, 3).build();
 		assertEquals(3, list.size());
 	}
 
 	@Test
 	public void testBuilder_addAll_Collection() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().memoryManager(createMemoryManager()).addAll(Arrays.asList(1, 2, 3)).build();
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().memoryManager(createMemoryManager()).addAll(Arrays.asList(1, 2, 3)).build();
 		assertEquals(3, list.size());
 	}
 }

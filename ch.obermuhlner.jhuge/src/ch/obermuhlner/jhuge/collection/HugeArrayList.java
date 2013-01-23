@@ -1,20 +1,16 @@
 package ch.obermuhlner.jhuge.collection;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import ch.obermuhlner.jhuge.collection.builder.AbstractHugeListBuilder;
-import ch.obermuhlner.jhuge.collection.internal.HugeLongArray;
-import ch.obermuhlner.jhuge.collection.internal.JavaLongArray;
-import ch.obermuhlner.jhuge.collection.internal.LongArray;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
 /**
- * A {@link List} that stores elements in a {@link MemoryManager}.
+ * A mutable {@link List} that stores elements in a {@link MemoryManager}.
  * 
  * <p>The implementation mimics an {@link ArrayList}.</p>
  * 
@@ -102,109 +98,31 @@ Java HotSpot(TM) 64-Bit Server VM (build 19.0-b09, mixed mode)
  * 
  * @param <E> the type of elements
  */
-public class HugeArrayList<E> extends AbstractList<E> {
-
-	private static final byte[] EMPTY_DATA = new byte[0];
-
-	private final MemoryManager memoryManager;
-	
-	private final LongArray addresses;
-
-	private final Converter<E> converter;
+public class HugeArrayList<E> extends AbstractHugeArrayList<E> {
 
 	private HugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
-		this.memoryManager = memoryManager;
-		this.converter = converter;
-		this.addresses = faster ? new JavaLongArray(capacity) : new HugeLongArray(memoryManager, capacity);
+		super(memoryManager, converter, faster, capacity);
 	}
 
-	/**
-	 * Returns the {@link MemoryManager}.
-	 * 
-	 * @return the {@link MemoryManager}
-	 */
-	MemoryManager getMemoryManager() {
-		return memoryManager;
-	}
-	
-	/**
-	 * Returns the element {@link Converter}.
-	 * 
-	 * @return the element {@link Converter}
-	 */
-	Converter<E> getElementConverter() {
-		return converter;
-	}
-	
 	@Override
 	public E set(int index, E element) {
-		byte[] data = serializeElement(element);
-		long address = memoryManager.allocate(data);
-
-		long oldAddress = addresses.set(index, address);
-		byte[] oldData = memoryManager.read(oldAddress);
-		E oldElement = deserializeElement(oldData);
-		memoryManager.free(oldAddress);
-		
-		return oldElement;
+		return setInternal(index, element);
 	}
-
+	
 	@Override
 	public void add(int index, E element) {
-		byte[] data = serializeElement(element);
-		long address = memoryManager.allocate(data);
-		
-		addresses.add(index, address);
+		addInternal(index, element);
 	}
 
 	@Override
 	public E remove(int index) {
-		long oldAddress1 = addresses.remove(index);
-		long oldAddress = oldAddress1;
-		byte[] oldData = memoryManager.read(oldAddress);
-		E oldElement = deserializeElement(oldData);
-		memoryManager.free(oldAddress);
-		
-		return oldElement;
+		return removeInternal(index);
 	}
-
-	@Override
-	public E get(int index) {
-		long address = addresses.get(index);
-		byte[] data = memoryManager.read(address);
-		E element = deserializeElement(data);
-		return element;
-	}
-
 	@Override
 	public void clear() {
-		for (int i = 0; i < addresses.size(); i++) {
-			long address = addresses.get(i);
-			memoryManager.free(address);
-		}
-		addresses.clear();
-		
-		//memoryManager.compact();
-	}
-	
-	@Override
-	public int size() {
-		return addresses.size();
+		clearInternal();
 	}
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + "{size=" + size() + "}";
-	}
-	
-	private byte[] serializeElement(E element) {
-		return element == null ? EMPTY_DATA : converter.serialize(element);
-	}
-
-	private E deserializeElement(byte[] data) {
-		return (data == null || data.length == 0) ? null : converter.deserialize(data);
-	}
-	
 	/**
 	 * Builds a {@link HugeArrayList}.
 	 * 

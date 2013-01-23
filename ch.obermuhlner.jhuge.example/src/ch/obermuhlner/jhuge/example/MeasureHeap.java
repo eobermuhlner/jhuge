@@ -8,7 +8,7 @@ import java.util.Map;
 
 import ch.obermuhlner.jhuge.collection.HugeArrayList;
 import ch.obermuhlner.jhuge.collection.HugeHashMap;
-import ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet;
+import ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet2;
 
 
 /**
@@ -34,9 +34,9 @@ public class MeasureHeap {
 	@SuppressWarnings("unused")
 	private static HugeArrayList<String> staticFastHugeArrayList;
 	@SuppressWarnings("unused")
-	private static ImmutableHugeHashSet<String> staticImmutableHugeHashSet;
+	private static ImmutableHugeHashSet2<String> staticImmutableHugeHashSet;
 	@SuppressWarnings("unused")
-	private static ImmutableHugeHashSet<String> staticFastImmutableHugeHashSet;
+	private static ImmutableHugeHashSet2<String> staticFastImmutableHugeHashSet;
 	@SuppressWarnings("unused")
 	private static HashMap<Integer, String> staticHashMap;
 	@SuppressWarnings("unused")
@@ -57,8 +57,8 @@ public class MeasureHeap {
 		staticArrayList = new ArrayList<String>(dataList);
 		staticHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
 		staticFastHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
-		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
-		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
+		staticImmutableHugeHashSet = new ImmutableHugeHashSet2.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
+		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet2.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
 //		staticHashMap = new HashMap<Integer, String>(dataMap);
 //		staticHugeHashMap = new HugeHashMap.Builder<Integer, String>().bufferSize(bufferSize).putAll(dataMap).build();
 		
