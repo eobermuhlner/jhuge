@@ -24,9 +24,18 @@ public abstract class AbstractHugeArrayListTest extends AbstractListTest {
 	protected <E> List<E> createList(E... initial) {
 		MemoryManager memoryManager = createMemoryManager();
 
-		return new HugeArrayList.Builder<E>().memoryManager(memoryManager).addAll(initial).build();
+		HugeArrayList.Builder<E> builder = new HugeArrayList.Builder<E>();
+		builder.memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		builder.capacity(initial.length);
+		builder.addAll(initial);
+		return builder.build();
 	}
 
+	protected abstract boolean isFaster();
+	
 	protected abstract MemoryManager createMemoryManager();
 
 	@Override
@@ -67,18 +76,18 @@ public abstract class AbstractHugeArrayListTest extends AbstractListTest {
 
 	@Test
 	public void testBuilder_bufferSize() {
-		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().bufferSize(1234).build();
+		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().bufferSize(12345).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(1234, memoryManager.getBufferSize());
+		assertEquals(12345, memoryManager.getBufferSize());
 	}
 
 	@Test
 	public void testBuilder_blockSize() {
-		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().blockSize(3456).build();
+		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().blockSize(34567).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(3456, memoryManager.getBlockSize());
+		assertEquals(34567, memoryManager.getBlockSize());
 	}
 
 	@Test(expected = IllegalStateException.class)

@@ -28,32 +28,39 @@ public class MeasureHeap {
 	}
 
 	@SuppressWarnings("unused")
-	private static ArrayList<Integer> staticArrayList;
+	private static ArrayList<String> staticArrayList;
 	@SuppressWarnings("unused")
-	private static HugeArrayList<Integer> staticHugeArrayList;
+	private static HugeArrayList<String> staticHugeArrayList;
 	@SuppressWarnings("unused")
-	private static ImmutableHugeHashSet<Integer> staticImmutableHugeHashSet;
+	private static HugeArrayList<String> staticFastHugeArrayList;
 	@SuppressWarnings("unused")
-	private static HashMap<Integer, Integer> staticHashMap;
+	private static ImmutableHugeHashSet<String> staticImmutableHugeHashSet;
 	@SuppressWarnings("unused")
-	private static HugeHashMap<Integer, Integer> staticHugeHashMap;
+	private static ImmutableHugeHashSet<String> staticFastImmutableHugeHashSet;
+	@SuppressWarnings("unused")
+	private static HashMap<Integer, String> staticHashMap;
+	@SuppressWarnings("unused")
+	private static HugeHashMap<Integer, String> staticHugeHashMap;
 	
 	private static void measureHeapMemory() {
 		int count = 10000;
-		List<Integer> dataList = new ArrayList<Integer>();
+		List<String> dataList = new ArrayList<String>();
 		for (int i = 0; i < count; i++) {
-			dataList.add(new Integer(i));
+			dataList.add(randomString(i));
 		}
-		Map<Integer, Integer> dataMap = new HashMap<Integer, Integer>();
+		Map<String, String> dataMap = new HashMap<String, String>();
 		for (int i = 0; i < count; i++) {
-			dataMap.put(i, i);
+			dataMap.put("key"+i, randomString(i));
 		}
 		
-		staticArrayList = new ArrayList<Integer>(dataList);
-		staticHugeArrayList = new HugeArrayList.Builder<Integer>().addAll(dataList).build();
-		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<Integer>().addAll(dataList).build();
-		staticHashMap = new HashMap<Integer, Integer>(dataMap);
-		staticHugeHashMap = new HugeHashMap.Builder<Integer, Integer>().putAll(dataMap).build();
+		final int bufferSize = 10 * 1024 * 1024;
+		staticArrayList = new ArrayList<String>(dataList);
+		staticHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
+		staticFastHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
+		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
+		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
+//		staticHashMap = new HashMap<Integer, String>(dataMap);
+//		staticHugeHashMap = new HugeHashMap.Builder<Integer, String>().bufferSize(bufferSize).putAll(dataMap).build();
 		
 		System.out.println("Ready to take heapdump.");
 		
@@ -64,5 +71,9 @@ public class MeasureHeap {
 		}
 
 		System.out.println("Goodbye.");
+	}
+	
+	private static String randomString(int value) {
+		return "X" + value;
 	}
 }

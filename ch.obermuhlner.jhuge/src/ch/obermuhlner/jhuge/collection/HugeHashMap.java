@@ -320,6 +320,8 @@ public class HugeHashMap<K, V> extends AbstractMap<K, V> {
 
 		private HugeHashMap<K, V> result;
 		
+		private boolean built;
+		
 		private HugeHashMap<K, V> getMap() {
 			if (result == null) {
 				result = new HugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter());
@@ -376,6 +378,18 @@ public class HugeHashMap<K, V> extends AbstractMap<K, V> {
 		}
 		
 		@Override
+		public Builder<K, V> faster() {
+			super.faster();
+			return this;
+		}
+		
+		@Override
+		public Builder<K, V> capacity(int capacity) {
+			super.capacity(capacity);
+			return this;
+		}
+				
+		@Override
 		public Builder<K, V> put(K key, V value) {
 			getMap().put(key, value);
 			return this;
@@ -389,6 +403,10 @@ public class HugeHashMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public HugeHashMap<K, V> build() {
+			if (built) {
+				throw new IllegalStateException("Has already been built.");
+			}
+			built = true;
 			return getMap();
 		}
 	}

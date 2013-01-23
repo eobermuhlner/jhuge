@@ -29,10 +29,18 @@ public abstract class AbstractImmutableHugeHashSetTest extends AbstractSetTest {
 		MemoryManager memoryManager = createMemoryManager();
 		Converter<E> converter = new CompactConverter(null);
 		
-		Builder<E> builder = new ImmutableHugeHashSet.Builder<E>().memoryManager(memoryManager).element(converter);
-		builder.addAll(Arrays.asList(initial));
+		Builder<E> builder = new ImmutableHugeHashSet.Builder<E>();
+		builder.element(converter);
+		builder.memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		builder.capacity(initial.length);
+		builder.addAll(initial);
 		return builder.build();
 	}
+	
+	protected abstract boolean isFaster();
 	
 	protected abstract MemoryManager createMemoryManager();
 
