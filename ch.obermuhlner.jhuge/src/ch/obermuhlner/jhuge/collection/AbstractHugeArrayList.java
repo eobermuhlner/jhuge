@@ -36,6 +36,14 @@ public abstract class AbstractHugeArrayList<E> extends AbstractList<E> {
 
 	private final Converter<E> converter;
 
+	/**
+	 * Constructs a {@link AbstractHugeArrayList}.
+	 * 
+	 * @param memoryManager the {@link MemoryManager}
+	 * @param converter the element {@link Converter}
+	 * @param faster <code>true</code> to trade memory consumption for improved performance
+	 * @param capacity the initial capacity
+	 */
 	protected AbstractHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
@@ -77,6 +85,7 @@ public abstract class AbstractHugeArrayList<E> extends AbstractList<E> {
 	 * 
 	 * @param index the index to insert the element
 	 * @param element the element to insert
+	 * @return the old element
 	 */
 	protected E setInternal(int index, E element) {
 		byte[] data = serializeElement(element);
@@ -115,6 +124,7 @@ public abstract class AbstractHugeArrayList<E> extends AbstractList<E> {
 	 * <p>Immutable subclasses can call this method from the builder.</p>
 	 * 
 	 * @param index the index of the element to remove
+	 * @return the old element
 	 */
 	protected E removeInternal(int index) {
 		long oldAddress1 = addresses.remove(index);
@@ -132,8 +142,6 @@ public abstract class AbstractHugeArrayList<E> extends AbstractList<E> {
 	 * <p>This method has the same semantics as {@link #clear()}.
 	 * Mutable subclasses can implement {@link #clear()} by calling this method.</p>
 	 * <p>Immutable subclasses can call this method from the builder.</p>
-	 * 
-	 * @param index the index of the element to remove
 	 */
 	protected void clearInternal() {
 		for (int i = 0; i < addresses.size(); i++) {

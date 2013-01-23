@@ -1,14 +1,31 @@
 package ch.obermuhlner.jhuge.collection;
 
 import java.util.AbstractSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import ch.obermuhlner.jhuge.collection.internal.IntObjectMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
+/**
+ * An abstract base class to simplify implementing a huge {@link Set} that mimics a {@link HashSet}.
+ * 
+ * <p>The mutating operations are implemented as protected methods with the suffix "Internal".</p>
+ * <ul>
+ * <li><code>addInternal(E)</code></li>
+ * <li><code>removeInternal(Object)</code></li>
+ * <li><code>clearInternal()</code></li>
+ * </ul>
+ * 
+ * <p>Immutable concrete subclasses can call these internal methods to implement a builder.</p>
+ * <p>Mutable concrete subclasses can implement the equivalent public methods by calling the internal methods.</p>
+ * 
+ * @param <E> the type of elements
+ */
 public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 
 	private static final byte[] EMPTY_DATA = new byte[0];
@@ -18,6 +35,12 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	
 	private final IntObjectMap<long[]> hashCodeMap = new IntObjectMap<long[]>();
 
+	/**
+	 * Constructs a {@link AbstractHugeHashSet}.
+	 * 
+	 * @param memoryManager the {@link MemoryManager}
+	 * @param converter the element {@link Converter}
+	 */
 	protected AbstractHugeHashSet(MemoryManager memoryManager, Converter<E> converter) {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
@@ -60,6 +83,16 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		}
 	}
 	
+	/**
+	 * Adds an element.
+	 * 
+	 * <p>This method has the same semantics as {@link #add(Object)}.
+	 * Mutable subclasses can implement {@link #add(Object)} by calling this method.</p>
+	 * <p>Immutable subclasses can call this method from the builder.</p>
+	 * 
+	 * @param element the element to add
+	 * @return <code>true</code> if the element was added, <code>false</code> otherwise 
+	 */
 	protected boolean addInternal(E element) {
 		int hashCode = element == null ? 0 : element.hashCode();
 		long[] addresses = hashCodeMap.get(hashCode);
@@ -86,6 +119,16 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		}
 	}
 	
+	/**
+	 * Removes the element.
+	 * 
+	 * <p>This method has the same semantics as {@link #remove(Object)}.
+	 * Mutable subclasses can implement {@link #remove(Object)} by calling this method.</p>
+	 * <p>Immutable subclasses can call this method from the builder.</p>
+	 * 
+	 * @param element the element to remove
+	 * @return <code>true</code> if the element was removed, <code>false</code> otherwise
+	 */
 	protected boolean removeInternal(Object element) {
 		int hashCode = element == null ? 0 : element.hashCode();
 		long[] addresses = hashCodeMap.get(hashCode);
@@ -118,6 +161,13 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		return false;
 	}
 
+	/**
+	 * Removes all elements.
+	 * 
+	 * <p>This method has the same semantics as {@link #clear()}.
+	 * Mutable subclasses can implement {@link #clear()} by calling this method.</p>
+	 * <p>Immutable subclasses can call this method from the builder.</p>
+	 */
 	protected void clearInternal() {
 		hashCodeMap.clear();
 		memoryManager.reset();
@@ -154,6 +204,14 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		return (data == null || data.length == 0) ? null : converter.deserialize(data);
 	}
 	
+	/**
+	 * Abstract base class to simplify implementing an {@link Iterator} for concrete subclasses of {@link AbstractHugeHashSet}.
+	 * 
+	 * <p>The mutating operation is implemented as a protected method with the suffix "Internal".</p>
+	 * <ul>
+	 * <li><code>removeInternal()</code></li>
+	 * </ul>
+	 */
 	protected abstract class AbstractHugeHashSetIterator implements Iterator<E> {
 		private Iterator<Entry<Integer, long[]>> hashCodeMapIterator = hashCodeMap.entrySet().iterator();
 		private Entry<Integer, long[]> currentEntry = null;
@@ -180,6 +238,13 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 			return readElement(address);
 		}
 
+		/**
+		 * Removes the last retrieved element from the underlying collection.
+		 * 
+		 * <p>This method has the same semantics as {@link #remove()}.
+		 * Mutable subclasses can implement {@link #remove()} by calling this method.</p>
+		 * <p>Immutable subclasses can call this method from the builder.</p>
+		 */
 		protected void removeInternal() {
 			long[] addresses = currentEntry.getValue();
 			long address = addresses[currentIndex];

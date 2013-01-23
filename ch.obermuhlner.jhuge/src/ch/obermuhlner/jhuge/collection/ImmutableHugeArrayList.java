@@ -32,7 +32,7 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  */
 public class ImmutableHugeArrayList<E> extends AbstractHugeArrayList<E> {
 
-	protected ImmutableHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
+	private ImmutableHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
 		super(memoryManager, converter, faster, capacity);
 	}
 
