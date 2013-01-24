@@ -90,5 +90,17 @@ Read the online [Javadoc JHuge 0.1](http://eobermuhlner.github.com/jhuge/release
 		}
 ```
  
+## Caveat
 
+The List implementations are all ready to go: 
+- HugeArrayList
+- ImmutableHugeArrayList
 
+The Set and Map implementations are functionally complete but the memory consumption is not yet optimal:
+- HugeHashSet
+- HugeHashMap
+- ImmutableHugeHashSet
+- ImmutableHugeHashMap
+
+For these 4 classes the faster mode is the default and the compact mode is not yet implemented.
+The faster mode still uses a standard HashMap to store the infrastructure.
