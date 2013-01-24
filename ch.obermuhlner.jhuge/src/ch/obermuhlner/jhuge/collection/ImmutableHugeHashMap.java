@@ -1,6 +1,5 @@
 package ch.obermuhlner.jhuge.collection;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -10,35 +9,35 @@ import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
 /**
- * A {@link Map} that stores key/value pairs in a {@link MemoryManager}.
+ * An immutable {@link Map} that stores elements in a {@link MemoryManager}.
  * 
- * <p>The implementation mimics a {@link HashMap}.</p>
+ * <p>The mutating operations throw {@link UnsupportedOperationException}:</p>
+ * <ul>
+ * <li> {@link #put(Object, Object)}</li>
+ * <li> {@link #putAll(Map)}</li>
+ * <li> {@link #remove(Object)}</li>
+ * <li> {@link #clear()}</li>
+ * <li> {@link java.util.Map.Entry#setValue(Object)} on the entries in the {@link #entrySet() entrySet}</li>
+ * <li> {@link Iterator#remove()} when iterating over the {@link #entrySet() entrySet}</li>
+ * </ul>
  * 
- * <p>Access to single entries through the key is O(1):
- * {@link #containsKey(Object)}}, {@link #get(Object)}}
- * </p>
+ * <p>In order to create an {@link ImmutableHugeHashMap} you must add the elements in the {@link Builder}.</p>
  * 
- * <p>In order to store the elements in the {@link MemoryManager} they must be serialized and deserialized to read them.
- * This is done by a {@link Converter} which can be specified in the {@link Builder}.
- * The default {@link Converter} can handle instances of all serializable classes.</p>
+ * <p>Other than the mutating operations all semantics, memory consumption and performance are identical to {@link HugeHashMap}.</p>
  * 
  * @param <K> the type of keys
  * @param <V> the type of values
+ * @see HugeHashMap
  */
-public class HugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
+public class ImmutableHugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 
-	private HugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
+	private ImmutableHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
 		super(memoryManager, keyConverter, valueConverter);
 	}
 
 	@Override
-	public V put(K key, V value) {
-		return putInternal(key, value);
-	}
-
-	@Override
 	public void clear() {
-		clearInternal();
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
@@ -56,7 +55,7 @@ public class HugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 	private class EntrySetIterator extends AbstractEntrySetIterator {
 		@Override
 		public void remove() {
-			removeInternal();
+			throw new UnsupportedOperationException();
 		}
 		
 		@Override
@@ -77,20 +76,20 @@ public class HugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 	}
 	
 	/**
-	 * Builds a {@link HugeHashMap}.
+	 * Builds an {@link ImmutableHugeHashMap}.
 	 *
 	 * @param <K> the type of keys
 	 * @param <V> the type of values
 	 */
 	public static class Builder<K, V> extends AbstractHugeMapBuilder<K, V> {
 
-		private HugeHashMap<K, V> result;
+		private ImmutableHugeHashMap<K, V> result;
 		
 		private boolean built;
 		
-		private HugeHashMap<K, V> getMap() {
+		private ImmutableHugeHashMap<K, V> getMap() {
 			if (result == null) {
-				result = new HugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter());
+				result = new ImmutableHugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter());
 			}
 			return result;
 		}
@@ -157,18 +156,21 @@ public class HugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 				
 		@Override
 		public Builder<K, V> put(K key, V value) {
-			getMap().put(key, value);
+			getMap().putInternal(key, value);
 			return this;
 		}
 		
 		@Override
 		public Builder<K, V> putAll(Map<K, V> map) {
-			getMap().putAll(map);
+			AbstractHugeHashMap<K, V> hugeMap = getMap();
+			for (Entry<K, V> entry : map.entrySet()) {
+				hugeMap.putInternal(entry.getKey(), entry.getValue());
+			}
 			return this;
 		}
 
 		@Override
-		public HugeHashMap<K, V> build() {
+		public ImmutableHugeHashMap<K, V> build() {
 			if (built) {
 				throw new IllegalStateException("Has already been built.");
 			}

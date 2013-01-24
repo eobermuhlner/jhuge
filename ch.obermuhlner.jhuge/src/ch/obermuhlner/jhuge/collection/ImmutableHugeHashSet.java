@@ -18,7 +18,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * <li> {@link #remove(Object)}</li>
  * <li> {@link #removeAll(Collection)}</li>
  * <li> {@link #clear()}</li>
- * </ul>
+ * <li> {@link Iterator#remove()} when iterating over this collection</li>
+s * </ul>
  * 
  * <p>In order to create an {@link ImmutableHugeHashSet} you must add the elements in the {@link Builder}.</p>
  * 

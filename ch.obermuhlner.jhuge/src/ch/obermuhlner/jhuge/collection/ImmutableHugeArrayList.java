@@ -1,6 +1,7 @@
 package ch.obermuhlner.jhuge.collection;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import ch.obermuhlner.jhuge.collection.builder.AbstractHugeListBuilder;
@@ -21,6 +22,7 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * <li> {@link #remove(Object)}</li>
  * <li> {@link #removeAll(Collection)}</li>
  * <li> {@link #clear()}</li>
+ * <li> {@link Iterator#remove()} when iterating over this collection</li>
  * </ul>
  * 
  * <p>In order to create an {@link ImmutableHugeArrayList} you must add the elements in the {@link Builder}.</p>

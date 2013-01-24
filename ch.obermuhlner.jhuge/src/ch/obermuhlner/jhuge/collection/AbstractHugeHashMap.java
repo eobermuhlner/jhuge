@@ -6,29 +6,27 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
-import ch.obermuhlner.jhuge.collection.builder.AbstractHugeMapBuilder;
 import ch.obermuhlner.jhuge.collection.internal.IntObjectMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
 /**
- * A {@link Map} that stores key/value pairs in a {@link MemoryManager}.
+ * An abstract base class to simplify implementing a huge {@link Map} that mimics a {@link HashMap}.
  * 
- * <p>The implementation mimics a {@link HashMap}.</p>
+ * <p>The mutating operations are implemented as protected methods with the suffix "Internal".</p>
+ * <ul>
+ * <li><code>putInternal(K, V)</code></li>
+ * <li><code>clearInternal()</code></li>
+ * </ul>
  * 
- * <p>Access to single entries is O(1):
- * {@link #containsKey(Object)}, {@link #containsValue(Object)}
- * </p>
- * 
- * <p>In order to store the elements in the {@link MemoryManager} they must be serialized and deserialized to read them.
- * This is done by a {@link Converter} which can be specified in the {@link Builder}.</p>
+ * <p>Immutable concrete subclasses can call these internal methods to implement a builder.</p>
+ * <p>Mutable concrete subclasses can implement the equivalent public methods by calling the internal methods.</p>
  * 
  * @param <K> the type of keys
  * @param <V> the type of values
  */
-public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
+public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 
 	private static final byte[] EMPTY_DATA = new byte[0];
 
@@ -38,7 +36,14 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 
 	private final IntObjectMap<long[]> hashCodeMap = new IntObjectMap<long[]>();
 
-	private AbstractHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
+	/**
+	 * Constructs an {@link AbstractHugeHashMap}.
+	 * 
+	 * @param memoryManager the {@link MemoryManager}
+	 * @param keyConverter the key {@link Converter}
+	 * @param valueConverter the value {@link Converter}
+	 */
+	protected AbstractHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
 		this.memoryManager = memoryManager;
 		this.keyConverter = keyConverter;
 		this.valueConverter = valueConverter;
@@ -69,53 +74,6 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	 */
 	Converter<V> getValueConverter() {
 		return valueConverter;
-	}
-	
-	@Override
-	public V put(K key, V value) {
-		int hashCode = key == null ? 0 : key.hashCode();
-		byte[] keyData = serializeKey(key);
-		byte[] valueData = serializeValue(value);
-		
-		long[] keyValueAddresses = hashCodeMap.get(hashCode);
-		if (keyValueAddresses == null) {
-			long keyAddress = memoryManager.allocate(keyData);
-			long valueAddress = memoryManager.allocate(valueData);
-			
-			keyValueAddresses = new long[2];
-			hashCodeMap.put(hashCode, keyValueAddresses);
-
-			keyValueAddresses[0] = keyAddress; 
-			keyValueAddresses[1] = valueAddress;
-			return null;
-		} else {
-			for (int i = 0; i < keyValueAddresses.length; i+=2) {
-				byte[] oldKeyData = memoryManager.read(keyValueAddresses[i+0]);
-				K oldKey = deserializeKey(oldKeyData);
-				if (key == null ? oldKey == null : key.equals(oldKey)) {
-					byte[] oldValueData = memoryManager.read(keyValueAddresses[i+1]);
-					V oldValue = deserializeValue(oldValueData);
-					memoryManager.free(keyValueAddresses[i+1]);
-					long valueAddress = memoryManager.allocate(valueData);
-					keyValueAddresses[i+1] = valueAddress;
-					return oldValue;
-				}
-			}
-			
-			long keyAddress = memoryManager.allocate(keyData);
-			long valueAddress = memoryManager.allocate(valueData);
-
-			hashCodeMap.put(hashCode, append(keyValueAddresses, keyAddress, valueAddress));
-			return null;
-		}
-	}
-	
-	private static long[] append(long[] keyValueAddresses, long keyAddress, long valueAddress) {
-		long[] result = new long[keyValueAddresses.length + 2];
-		System.arraycopy(keyValueAddresses, 0, result, 0, keyValueAddresses.length);
-		result[result.length - 2] = keyAddress;
-		result[result.length - 1] = valueAddress;
-		return result;
 	}
 	
 	@Override
@@ -157,11 +115,6 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public Set<Entry<K, V>> entrySet() {
-		return new EntrySet();
-	}
-	
-	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "{size=" + size() + "}";
 	}
@@ -183,10 +136,73 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		return hashCodeMap.isEmpty();
 	}
 	
-	@Override
-	public void clear() {
+	/**
+	 * Puts a key/value pair.
+	 * 
+	 * <p>This method has the same semantics as {@link #put(Object, Object)}.
+	 * Mutable subclasses can implement {@link #put(Object, Object)} by calling this method.</p>
+	 * <p>Immutable subclasses can call this method from the builder.</p>
+	 * 
+	 * @param key the key to add
+	 * @param value the value to add
+	 * @return the old value, or <code>null</code> if none
+	 */
+	protected V putInternal(K key, V value) {
+		int hashCode = key == null ? 0 : key.hashCode();
+		byte[] keyData = serializeKey(key);
+		byte[] valueData = serializeValue(value);
+		
+		long[] keyValueAddresses = hashCodeMap.get(hashCode);
+		if (keyValueAddresses == null) {
+			long keyAddress = memoryManager.allocate(keyData);
+			long valueAddress = memoryManager.allocate(valueData);
+			
+			keyValueAddresses = new long[2];
+			hashCodeMap.put(hashCode, keyValueAddresses);
+
+			keyValueAddresses[0] = keyAddress; 
+			keyValueAddresses[1] = valueAddress;
+			return null;
+		} else {
+			for (int i = 0; i < keyValueAddresses.length; i+=2) {
+				byte[] oldKeyData = memoryManager.read(keyValueAddresses[i+0]);
+				K oldKey = deserializeKey(oldKeyData);
+				if (key == null ? oldKey == null : key.equals(oldKey)) {
+					byte[] oldValueData = memoryManager.read(keyValueAddresses[i+1]);
+					V oldValue = deserializeValue(oldValueData);
+					memoryManager.free(keyValueAddresses[i+1]);
+					long valueAddress = memoryManager.allocate(valueData);
+					keyValueAddresses[i+1] = valueAddress;
+					return oldValue;
+				}
+			}
+			
+			long keyAddress = memoryManager.allocate(keyData);
+			long valueAddress = memoryManager.allocate(valueData);
+
+			hashCodeMap.put(hashCode, append(keyValueAddresses, keyAddress, valueAddress));
+			return null;
+		}
+	}
+	
+	/**
+	 * Removes all key/value pairs.
+	 * 
+	 * <p>This method has the same semantics as {@link #clear()}.
+	 * Mutable subclasses can implement {@link #clear()} by calling this method.</p>
+	 * <p>Immutable subclasses can call this method from the builder.</p>
+	 */
+	protected void clearInternal() {
 		hashCodeMap.clear();
 		memoryManager.reset();
+	}
+	
+	private static long[] append(long[] keyValueAddresses, long keyAddress, long valueAddress) {
+		long[] result = new long[keyValueAddresses.length + 2];
+		System.arraycopy(keyValueAddresses, 0, result, 0, keyValueAddresses.length);
+		result[result.length - 2] = keyAddress;
+		result[result.length - 1] = valueAddress;
+		return result;
 	}
 	
 	private byte[] serializeKey(K key) {
@@ -205,13 +221,10 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		return (data == null || data.length == 0) ? null : valueConverter.deserialize(data);
 	}
 	
-	private class EntrySet extends AbstractSet<Entry<K, V>> {
-
-		@Override
-		public Iterator<Entry<K, V>> iterator() {
-			return new EntrySetIterator();
-		}
-
+	/**
+	 * Abstract base class to simplify implementing the {@link Map#entrySet() entrySet} of an {@link AbstractHugeHashMap}.
+	 */
+	protected abstract class AbstractEntrySet extends AbstractSet<Entry<K, V>> {
 		@Override
 		public int size() {
 			int result = 0;
@@ -222,7 +235,10 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 	
-	private class EntrySetIterator implements Iterator<Entry<K, V>> {
+	/**
+	 * Abstract base class to simplify implementing the iterator of a {@link Map#entrySet() entrySet} of an {@link AbstractHugeHashMap}.
+	 */
+	protected abstract class AbstractEntrySetIterator implements Iterator<Entry<K, V>> {
 		private Iterator<Entry<Integer, long[]>> hashCodeMapIterator = hashCodeMap.entrySet().iterator();
 		private Entry<Integer, long[]> currentEntry = null;
 		private int currentIndex = 0;
@@ -248,12 +264,27 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 			long keyAddress = keyValueAddresses[currentIndex+0];
 			long valueAddress = keyValueAddresses[currentIndex+1];
 			
-			HugeMapEntry entry = new HugeMapEntry(getKey(keyAddress), getValue(valueAddress));
-
+			AbstractEntry entry = createEntry(getKey(keyAddress), getValue(valueAddress));
 			return entry;
 		}
-		@Override
-		public void remove() {
+		
+		/**
+		 * Creates an {@link java.util.Map.Entry} with the specified key/value pair.
+		 * 
+		 * @param key the key
+		 * @param value the value
+		 * @return the entry
+		 */
+		protected abstract AbstractEntry createEntry(K key, V value);
+
+		/**
+		 * Removes the last retrieved element from the underlying map.
+		 * 
+		 * <p>This method has the same semantics as {@link #remove()}.
+		 * Mutable subclasses can implement {@link #remove()} by calling this method.</p>
+		 * <p>Immutable subclasses can call this method from the builder.</p>
+		 */
+		protected void removeInternal () {
 			long[] keyValueAddresses = currentEntry.getValue();
 			long keyAddress = keyValueAddresses[currentIndex+0];
 			long valueAddress = keyValueAddresses[currentIndex+1];
@@ -274,12 +305,21 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 	
-	class HugeMapEntry implements Entry<K, V> {
+	/**
+	 * Abstract base class to simplify implementing an {@link java.util.Map.Entry}.
+	 */
+	protected abstract class AbstractEntry implements Entry<K, V> {
 
 		private final K key;
 		private V value;
 
-		public HugeMapEntry(K key, V value) {
+		/**
+		 * Constructs an entry.
+		 * 
+		 * @param key the key
+		 * @param value the value
+		 */
+		public AbstractEntry(K key, V value) {
 			this.key = key;
 			this.value = value;
 		}
@@ -294,12 +334,21 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 			return value;
 		}
 
-		@Override
-		public V setValue(V value) {
+		/**
+		 * Sets the value of this entry in the underlying map.
+		 * 
+		 * <p>This method has the same semantics as {@link #setValue(Object)}.
+		 * Mutable subclasses can implement {@link #setValue(Object)} by calling this method.</p>
+		 * <p>Immutable subclasses can call this method from the builder.</p>
+		 * 
+		 * @param value the value to set
+		 * @return the old value
+		 */
+		protected V setValueInternal(V value) {
 			V oldValue = this.value;
 			this.value = value;
 			
-			put(key, value); // FIXME untested
+			put(key, value);
 			
 			return oldValue;
 		}
@@ -307,107 +356,6 @@ public class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		@Override
 		public String toString() {
 			return key + "=" + value;
-		}
-	}
-	
-	/**
-	 * Builds a {@link AbstractHugeHashMap}.
-	 *
-	 * @param <K> the type of keys
-	 * @param <V> the type of values
-	 */
-	public static class Builder<K, V> extends AbstractHugeMapBuilder<K, V> {
-
-		private AbstractHugeHashMap<K, V> result;
-		
-		private boolean built;
-		
-		private AbstractHugeHashMap<K, V> getMap() {
-			if (result == null) {
-				result = new AbstractHugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter());
-			}
-			return result;
-		}
-
-		@Override
-		public Builder<K, V> classLoader(ClassLoader classLoader) {
-			super.classLoader(classLoader);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> key(Class<K> keyClass) {
-			super.key(keyClass);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> key(Converter<K> keyConverter) {
-			super.key(keyConverter);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> value(Class<V> valueClass) {
-			super.value(valueClass);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> value(Converter<V> valueConverter) {
-			super.value(valueConverter);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> bufferSize(int bufferSize) {
-			super.bufferSize(bufferSize);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> blockSize(int blockSize) {
-			super.blockSize(blockSize);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> memoryManager(MemoryManager memoryManager) {
-			super.memoryManager(memoryManager);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> faster() {
-			super.faster();
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> capacity(int capacity) {
-			super.capacity(capacity);
-			return this;
-		}
-				
-		@Override
-		public Builder<K, V> put(K key, V value) {
-			getMap().put(key, value);
-			return this;
-		}
-		
-		@Override
-		public Builder<K, V> putAll(Map<K, V> map) {
-			getMap().putAll(map);
-			return this;
-		}
-
-		@Override
-		public AbstractHugeHashMap<K, V> build() {
-			if (built) {
-				throw new IllegalStateException("Has already been built.");
-			}
-			built = true;
-			return getMap();
 		}
 	}
 }

@@ -17,7 +17,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * <p>Access to single elements is O(1).</p>
  * 
  * <p>In order to store the keys and values in the {@link MemoryManager} they must be serialized and deserialized to read them.
- * This is done by a {@link Converter} which can be specified in the {@link Builder}.</p>
+ * This is done by a {@link Converter} which can be specified in the {@link Builder}.
+ * The default {@link Converter} can handle instances of all serializable classes.</p>
  * 
  * @param <E> the type of elements
  */

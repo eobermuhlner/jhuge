@@ -188,25 +188,41 @@ public abstract class AbstractSerializableConverterTest {
 		assertConvert(converter, new String[] { "", "a", null, "XYZ"} );
 	}
 	
-	private static <T> void assertConvert(Converter<T> converter, T object) {
+	/**
+	 * Asserts the correct {@link Converter#serialize(Object)} and {@link Converter#deserialize(byte[])} behavior with the specified object instance.
+	 * 
+	 * @param converter the {@link Converter} to test
+	 * @param object the object to convert
+	 */
+	public static <T> void assertConvert(Converter<T> converter, T object) {
+		String desc = "object=" + object;
+
+		int serializedLength = converter.serializedLength();
+		
 		byte[] data = converter.serialize(object);
+		if (serializedLength >= 0) {
+			assertEquals(desc, serializedLength, data.length);
+		}
 		T deserializedObject = converter.deserialize(data);
 		if (object != null && object.getClass().isArray()) {
 			assertArrayEquals(object, deserializedObject);
 			return;
 		}
-		assertEquals(object, deserializedObject);
+		assertEquals(desc, object, deserializedObject);
 	}
 	
-	private static void assertArrayEquals(Object expected, Object actual) {
+	public static void assertArrayEquals(Object expected, Object actual) {
+		assertArrayEquals("", expected, actual);
+	}
+	
+	public static void assertArrayEquals(String message, Object expected, Object actual) {
 		int length = Array.getLength(expected);
-		assertEquals("length", length, Array.getLength(actual));
+		assertEquals(message + "length", length, Array.getLength(actual));
 		
 		for (int i = 0; i < length; i++) {
 			Object expectedElement = Array.get(expected, i);
 			Object actualElement = Array.get(actual, i);
-			assertEquals("array[" + i + "]", expectedElement, actualElement);
+			assertEquals(message + " array[" + i + "]", expectedElement, actualElement);
 		}
 	}
-	
 }

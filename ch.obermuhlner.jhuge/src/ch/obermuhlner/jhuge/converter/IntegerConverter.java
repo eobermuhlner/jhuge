@@ -26,10 +26,10 @@ public class IntegerConverter implements Converter<Integer> {
 	@Override
 	public Integer deserialize(byte[] data) {
 		int value = (
-				((data[1] & 0xff) << 24) +
-				((data[2] & 0xff) << 16) +
-				((data[3] & 0xff) << 8) +
-				(data[4] & 0xff));
+				((data[0] & 0xff) << 24) +
+				((data[1] & 0xff) << 16) +
+				((data[2] & 0xff) << 8) +
+				(data[3] & 0xff));
 		return value;
 	}
 }

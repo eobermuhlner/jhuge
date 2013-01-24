@@ -18,7 +18,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * <p>Removing a single element is O(n).</p>
  * 
  * <p>In order to store the elements in the {@link MemoryManager} they must be serialized and deserialized to read them.
- * This is done by a {@link Converter} which can be specified in the {@link Builder}.</p>
+ * This is done by a {@link Converter} which can be specified in the {@link Builder}.
+ * The default {@link Converter} can handle instances of all serializable classes.</p>
  * 
  * <h2>Heap Consumption</h2>
  * 
