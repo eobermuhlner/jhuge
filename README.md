@@ -6,10 +6,12 @@ JHuge provides several collections that follow the Java Collection API but store
 Storing data outside of the Java heap can alleviate the problems with garbage collection becoming slow with a large Java heap.
 
 Currently the following implementations are available:
-- HugeArrayList<E> implements List<E>
-- HugeHashSet implements Set<E>
-- ImmutableHugeHashSet<E> implements Set<E>
-- HugeHashMap<K, V> implements Map<K, V>
+- HugeArrayList
+- HugeHashSet
+- HugeHashMap
+- ImmutableHugeArrayList
+- ImmutableHugeHashSet
+- ImmutableHugeHashMap
 
 The collections in JHuge are designed to be flexible.
 You can:
