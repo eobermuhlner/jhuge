@@ -1,5 +1,4 @@
-JHuge - Java Huge Collections
-=============================
+# JHuge - Java Huge Collections
 
 JHuge provides several collections that follow the Java Collection API but store the data in external memory outside of the Java heap.
 
@@ -19,9 +18,13 @@ You can:
 - provide custom converters for the elements you store
 - trade some Java heap consumption for improved speed
 
+## Release 0.1
 
-Examples
---------
+Download the [JHuge-0.1.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/JHuge-0.1.jar).
+
+Read the online [Javadoc JHuge 0.1](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/)
+
+## Examples
  
  ```Java
  		// Simple HugeArrayList example.
