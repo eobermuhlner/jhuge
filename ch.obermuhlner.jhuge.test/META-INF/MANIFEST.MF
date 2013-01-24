@@ -5,3 +5,4 @@ Bundle-SymbolicName: ch.obermuhlner.jhuge.test
 Bundle-Version: 0.1.0
 Fragment-Host: ch.obermuhlner.jhuge;bundle-version="0.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: org.junit
