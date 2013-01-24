@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Jhuge : Java Huge Collections" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Jhuge</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/eobermuhlner/jhuge">View on GitHub</a>
+
+          <h1 id="project_title">Jhuge</h1>
+          <h2 id="project_tagline">Java Huge Collections</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/eobermuhlner/jhuge/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/eobermuhlner/jhuge/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>JHuge - Java Huge Collections</h1>
+
+<p>JHuge provides several collections that follow the Java Collection API but store the data in external memory outside of the Java heap.</p>
+
+<p>Storing data outside of the Java heap can alleviate the problems with garbage collection becoming slow with a large Java heap.</p>
+
+<p>Currently the following implementations are available:</p>
+
+<ul>
+<li>HugeArrayList</li>
+<li>HugeHashSet</li>
+<li>HugeHashMap</li>
+<li>ImmutableHugeArrayList</li>
+<li>ImmutableHugeHashSet</li>
+<li>ImmutableHugeHashMap</li>
+</ul><p>The collections in JHuge are designed to be flexible.
+You can:</p>
+
+<ul>
+<li>provide alternate memory manager</li>
+<li>provide custom converters for the elements you store</li>
+<li>trade some Java heap consumption for improved speed</li>
+</ul><h2>Examples</h2>
+
+<div class="highlight"><pre>        <span class="c1">// Simple HugeArrayList example.</span>
+
+        <span class="n">HugeArrayList</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">list</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HugeArrayList</span><span class="o">.</span><span class="na">Builder</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;().</span><span class="na">build</span><span class="o">();</span>
+
+        <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">"This is a small text."</span><span class="o">);</span>
+        <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">"But you could as well store many large documents."</span><span class="o">);</span>
+        <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">"No matter how many of these texts you put into the list, the Java heap will never grow."</span><span class="o">);</span>
+        <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">"Because they are stored in external memory outside of the Java heap."</span><span class="o">);</span>
+        <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">"When you access the content of the list the objects are restored and become again available as Java objects."</span><span class="o">);</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">string</span> <span class="o">:</span> <span class="n">list</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">string</span><span class="o">);</span>
+        <span class="o">}</span>
+</pre></div>
+
+<div class="highlight"><pre>        <span class="c1">// A HugeArrayList with a little configuration in the Builder.</span>
+
+        <span class="n">Builder</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">builder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HugeArrayList</span><span class="o">.</span><span class="na">Builder</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;();</span>
+        <span class="n">builder</span><span class="o">.</span><span class="na">faster</span><span class="o">();</span> <span class="c1">// elements are still stored off-heap but access infrastructure is now in Java heap to improve performance</span>
+        <span class="n">builder</span><span class="o">.</span><span class="na">capacity</span><span class="o">(</span><span class="mi">200</span><span class="o">);</span> <span class="c1">// optimize for capacity of 200 elements (can still grow)</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">builder</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">createSomeExampleString</span><span class="o">(</span><span class="n">i</span><span class="o">));</span> <span class="c1">// initial elements can be added to the Builder</span>
+        <span class="o">}</span>
+
+        <span class="n">HugeArrayList</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">list</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">100</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">200</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">list</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">createSomeExampleString</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+        <span class="o">}</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">string</span> <span class="o">:</span> <span class="n">list</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">string</span><span class="o">);</span>
+        <span class="o">}</span>
+</pre></div>
+
+<div class="highlight"><pre>        <span class="c1">// Simple HugeHashMap example.</span>
+
+        <span class="n">HugeHashMap</span><span class="o">.</span><span class="na">Builder</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">builder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HugeHashMap</span><span class="o">.</span><span class="na">Builder</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;();</span>
+
+        <span class="n">Map</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">createSomeExampleString</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+        <span class="o">}</span>
+
+        <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="n">Integer</span> <span class="n">key</span> <span class="o">:</span> <span class="n">map</span><span class="o">.</span><span class="na">keySet</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(++</span><span class="n">index</span> <span class="o">%</span> <span class="mi">20</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">();</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">" "</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+</pre></div>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Jhuge maintained by <a href="https://github.com/eobermuhlner">eobermuhlner</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
