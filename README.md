@@ -20,7 +20,9 @@ You can:
 
 ## Release 0.1
 
-Download the [JHuge-0.1.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/JHuge-0.1.jar).
+Download the library and the source bundle:
+- [ch.obermuhlner.jhuge_0.1.0.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/ch.obermuhlner.jhuge_0.1.0.jar) - the JHuge library (OSGi bundle)
+- [ch.obermuhlner.jhuge.source_0.1.0.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/ch.obermuhlner.jhuge.source_0.1.0.jar) - the source bundle
 
 Read the online [Javadoc JHuge 0.1](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/)
 
