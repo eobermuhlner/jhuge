@@ -62,7 +62,7 @@ The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.1
 		HugeArrayList<String> list = builder.build();
 
 		for (int i = 100; i < 200; i++) {
-			list.add(createSomeExampleString(i));
+			list.add(createSomeExampleString(i)); // add more elements
 		}
 
 		for (String string : list) {
@@ -72,15 +72,16 @@ The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.1
  
  
 ```Java
-		// Simple HugeHashMap example.
+		// ImmutableHugeHashMap example.
 		
-		HugeHashMap.Builder<Integer, String> builder = new HugeHashMap.Builder<Integer, String>();
-		
-		Map<Integer, String> map = builder.build();
-		
+		Builder<Integer, String> builder = new ImmutableHugeHashMap.Builder<Integer, String>();
+		builder.key(Integer.class); // give a hint about the type of keys to optimize conversion and storage
+		builder.value(String.class); // give a hint about the type of values to optimize conversion and storage
 		for (int i = 0; i < 100; i++) {
-			map.put(i, createSomeExampleString(i));
+			builder.put(i, createSomeExampleString(i)); // elements must be added to the builder
 		}
+		
+		Map<Integer, String> map = builder.build(); // once the Map is created it can no longer be modified
 		
 		int index = 0;
 		for (Integer key : map.keySet()) {
@@ -113,11 +114,30 @@ With the next release this should be available.
 
 ### Converters
 
-The default [Converter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/CompactConverter.html)
+The default [CompactConverter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/CompactConverter.html)
 is implemented but the custom converters for the specific classes are still incomplete.
 Currently implemented are:
 - [IntegerConverter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/IntegerConverter.html)
 - [LongConverter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/LongConverter.html)
 
+The CompactConverter can also be optimized in some important cases (e.g. String, BigDecimal).
 
+### Benchmark Report
+
+The current implementation start allocating memory blocks only when necessary.
+This leads to the side effect that the very first write operation is much slower since allocating a direct memory buffer is expensive.
+
+In the benchmark report this would show as a strong peak for the first write operation (typically at the 0 position of the x-axis).
+Because this peak is so high it would make the chart unreadable (all other values would be glued to the bottom of the y-axis).
+
+In order to still produce a meaningful chart a little cheating was done in the benchmarks.
+The test data is set up in a way that ensures that there has always been a buffer allocated before benchmarking starts.
+
+I plan a future Builder option so that buffer allocation and shrinking strategy can be configured.
+Possible strategies would be something like:
+- shrink-as-much-as-possible
+- shrink-but-keep-always-one-buffer-allocated (this would be default)
+- never-shrink-and-always-at-least-one-buffer-allocated
+
+The benchmark cheat could then be removed and my bad conscience would be gone.
 
