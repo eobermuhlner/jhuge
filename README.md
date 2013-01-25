@@ -5,12 +5,12 @@ JHuge provides several collections that follow the Java Collection API but store
 Storing data outside of the Java heap can alleviate the problems with garbage collection becoming slow with a large Java heap.
 
 Currently the following implementations are available:
-- HugeArrayList
-- HugeHashSet
-- HugeHashMap
-- ImmutableHugeArrayList
-- ImmutableHugeHashSet
-- ImmutableHugeHashMap
+- [HugeArrayList](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/HugeArrayList.html)
+- [HugeHashSet](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/HugeHashSet.html)
+- [HugeHashMap](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/HugeHashMap.html)
+- [ImmutableHugeArrayList](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/ImmutableHugeArrayList.html)
+- [ImmutableHugeHashSet](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/ImmutableHugeHashSet.html)
+- [ImmutableHugeHashMap](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/collection/ImmutableHugeHashMap.html)
 
 The collections in JHuge are designed to be flexible.
 You can:
@@ -93,13 +93,15 @@ The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.1
 		}
 ```
  
-## Caveat
+## Caveats
 
-The List implementations are all ready to go: 
+### Tradeoff Faster vs. Compact
+
+The builder option `faster()` to trade some Java heap consumption against improved performance is fully implemented in the List implementations:
 - HugeArrayList
 - ImmutableHugeArrayList
 
-The Set and Map implementations are functionally complete but the memory consumption is not yet optimal:
+The Set and Map implementations are functionally complete but currently only the `faster()` mode is implemented:
 - HugeHashSet
 - HugeHashMap
 - ImmutableHugeHashSet
@@ -107,3 +109,15 @@ The Set and Map implementations are functionally complete but the memory consump
 
 For these 4 classes the faster mode is the default and the compact mode is not yet implemented.
 The faster mode still uses a standard HashMap to store the infrastructure.
+With the next release this should be available.
+
+### Converters
+
+The default [Converter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/CompactConverter.html)
+is implemented but the custom converters for the specific classes are still incomplete.
+Currently implemented are:
+- [IntegerConverter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/IntegerConverter.html)
+- [LongConverter](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/ch/obermuhlner/jhuge/converter/LongConverter.html)
+
+
+
