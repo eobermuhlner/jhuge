@@ -24,7 +24,10 @@ Download the library and the source bundle:
 - [ch.obermuhlner.jhuge_0.1.0.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/ch.obermuhlner.jhuge_0.1.0.jar) - the JHuge library (OSGi bundle)
 - [ch.obermuhlner.jhuge.source_0.1.0.jar](http://eobermuhlner.github.com/jhuge/releases/release-0.1/ch.obermuhlner.jhuge.source_0.1.0.jar) - the source bundle
 
-Read the online [Javadoc JHuge 0.1](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/)
+Read the online [Javadoc JHuge 0.1](http://eobermuhlner.github.com/jhuge/releases/release-0.1/javadoc/).
+
+The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.1/report/) is also online.
+
 
 ## Examples
  
