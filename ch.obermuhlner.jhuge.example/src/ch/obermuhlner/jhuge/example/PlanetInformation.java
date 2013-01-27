@@ -21,6 +21,18 @@ public class PlanetInformation {
 	private Map<Integer, PlanetInfo> planetMap = null;
 	
 	private int nextPlanetId = 0;
+
+	private long initialUsedMemory;
+
+	public PlanetInformation() {
+	}
+
+	private void setupInitialUsedMemory() {
+		System.gc();
+		long freeMemory = Runtime.getRuntime().freeMemory();
+		long totalMemory = Runtime.getRuntime().totalMemory();
+		initialUsedMemory = totalMemory - freeMemory;
+	}
 	
 	private void reset(boolean useHeap) {
 		nextPlanetId = 0;
@@ -47,67 +59,83 @@ public class PlanetInformation {
 		boolean finished = false;
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		
+
+		setupInitialUsedMemory();
+
 		while (! finished) {
 			System.out.println();
 			System.out.print("> ");
 			String[] command = readCommandLine(reader);
 			
-			if (command.length == 0) {
-				// does nothing
-				
-			} else if (command[0].equals("help")) {
-				System.out.println("Commands:");
-				System.out.println("  help");
-				System.out.println("  exit");
-				System.out.println("  heap");
-				System.out.println("  reset onheap");
-				System.out.println("  reset offheap");
-				System.out.println("  info");
-				System.out.println("  more");
-				System.out.println("  planets");
-				System.out.println("  planet id <id>");
-				System.out.println("  planet name <id>");
-
-			} else if (command[0].equals("exit")) {
-				System.out.println("Goodbye.");
-				finished = true;
-				
-			} else if (command[0].equals("heap")) {
-				System.gc();
-				long freeMemory = Runtime.getRuntime().freeMemory();
-				long totalMemory = Runtime.getRuntime().totalMemory();
-				long usedMemory = totalMemory-freeMemory;
-				System.out.println("Used  : " + usedMemory + " bytes (" + asMegaBytes(usedMemory) + " MB)");
-				System.out.println("Free  : " + freeMemory + " bytes (" + asMegaBytes(freeMemory) + " MB)");
-				System.out.println("Total : " + totalMemory + " bytes (" + asMegaBytes(totalMemory) + " MB)");
-				
-			} else if (command[0].equals("reset")) {
-				boolean useHeap = command.length > 1 ? "onheap".equals(command[1]) : false;
-				reset(useHeap);
-				System.out.println("Resetted to use " + (useHeap ? "onheap" : "offheap") + " storage.");
-				
-			} else if (command[0].equals("info")) {
-				System.out.println(planetMap.size() + " planets found.");
-				
-			} else if (command[0].equals("more")) {
-				int count = command.length > 1 ? Integer.parseInt(command[1]) : 10;
-				addMorePlanets(count);
-				System.out.println("Added " + count + " more planets.");
-				
-			} else if (command[0].equals("planets")) {
-				for (Entry<Integer, PlanetInfo> entry : planetMap.entrySet()) {
-					System.out.println(entry.getKey() + " : " + entry.getValue().getName());
-				}
-				
-			} else if (command[0].equals("planet") && command[1].equals("id")) {
-				PlanetInfo planetInfo = planetMap.get(Integer.parseInt(command[2]));
-				print(planetInfo);
-				
-			} else {
-				System.out.println("Unknown command: " + Arrays.toString(command));
+			try {
+				finished = executeCommandLine(command);
+			} catch (RuntimeException exception) {
+				exception.printStackTrace();
 			}
 		}
+	}
+
+	private boolean executeCommandLine(String[] command) {
+		boolean finished = false;
+		
+		if (command.length == 0) {
+			// does nothing
+			
+		} else if (command[0].equals("help")) {
+			System.out.println("Commands:");
+			System.out.println("  help");
+			System.out.println("  exit");
+			System.out.println("  heap");
+			System.out.println("  reset onheap");
+			System.out.println("  reset offheap");
+			System.out.println("  info");
+			System.out.println("  more");
+			System.out.println("  planets");
+			System.out.println("  planet id <id>");
+			System.out.println("  planet name <id>");
+
+		} else if (command[0].equals("exit")) {
+			System.out.println("Goodbye.");
+			finished = true;
+			
+		} else if (command[0].equals("heap")) {
+			System.gc();
+			long freeMemory = Runtime.getRuntime().freeMemory();
+			long totalMemory = Runtime.getRuntime().totalMemory();
+			long usedMemory = totalMemory - freeMemory;
+			long additionalUsedMemory = usedMemory - initialUsedMemory;
+			System.out.println("Used  : " + usedMemory + " bytes (" + asMegaBytes(usedMemory) + " MB)");
+			System.out.println("Free  : " + freeMemory + " bytes (" + asMegaBytes(freeMemory) + " MB)");
+			System.out.println("Total : " + totalMemory + " bytes (" + asMegaBytes(totalMemory) + " MB)");
+			System.out.println("Additional Used : " + additionalUsedMemory + " bytes (" + asMegaBytes(additionalUsedMemory) + " MB)");
+			
+		} else if (command[0].equals("reset")) {
+			boolean useHeap = command.length > 1 ? "onheap".equals(command[1]) : false;
+			reset(useHeap);
+			System.out.println("Resetted to use " + (useHeap ? "onheap" : "offheap") + " storage.");
+			
+		} else if (command[0].equals("info")) {
+			System.out.println(planetMap.size() + " planets found.");
+			
+		} else if (command[0].equals("more")) {
+			int count = command.length > 1 ? Integer.parseInt(command[1]) : 10;
+			addMorePlanets(count);
+			System.out.println("Added " + count + " more planets.");
+			
+		} else if (command[0].equals("planets")) {
+			for (Entry<Integer, PlanetInfo> entry : planetMap.entrySet()) {
+				System.out.println(entry.getKey() + " : " + entry.getValue().getName());
+			}
+			
+		} else if (command[0].equals("planet") && command[1].equals("id")) {
+			PlanetInfo planetInfo = planetMap.get(Integer.parseInt(command[2]));
+			print(planetInfo);
+			
+		} else {
+			System.out.println("Unknown command: " + Arrays.toString(command));
+		}
+		
+		return finished;
 	}
 	
 	private static double asMegaBytes(long bytes) {
