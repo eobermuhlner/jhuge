@@ -10,7 +10,7 @@ public class MemoryMappedFile_ImmutableHugeHashSetTest extends AbstractImmutable
 
 	@Override
 	protected MemoryManager createMemoryManager() {
-		return new MemoryMappedFileManager(150);
+		return new MemoryMappedFileManager(20000);
 	}
 
 }

@@ -3,11 +3,13 @@ package ch.obermuhlner.jhuge.collection;
 import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import ch.obermuhlner.jhuge.collection.internal.IntObjectMap;
+import ch.obermuhlner.jhuge.collection.internal.HugeIntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.IntIterator;
+import ch.obermuhlner.jhuge.collection.internal.IntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.JavaIntLongArrayMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
@@ -33,17 +35,21 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	private final MemoryManager memoryManager;
 	private final Converter<E> converter;
 	
-	private final IntObjectMap<long[]> hashCodeMap = new IntObjectMap<long[]>();
+	private final IntLongArrayMap hashCodeMap;
 
 	/**
 	 * Constructs a {@link AbstractHugeHashSet}.
 	 * 
 	 * @param memoryManager the {@link MemoryManager}
 	 * @param converter the element {@link Converter}
+	 * @param faster <code>true</code> to trade memory consumption for improved performance
+	 * @param capacity the initial capacity
 	 */
-	protected AbstractHugeHashSet(MemoryManager memoryManager, Converter<E> converter) {
+	protected AbstractHugeHashSet(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
+		
+		hashCodeMap = faster ? new JavaIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
 	}
 
 	/**
@@ -169,15 +175,26 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	 * <p>Immutable subclasses can call this method from the builder.</p>
 	 */
 	protected void clearInternal() {
+		IntIterator hashCodeMapIterator = hashCodeMap.keySet();
+		while (hashCodeMapIterator.hasNext()) {
+			int key = hashCodeMapIterator.next();
+			long[] addresses = hashCodeMap.get(key);
+			for (int j = 0; j < addresses.length; j++) {
+				memoryManager.free(addresses[j]);
+			}
+		}
+
 		hashCodeMap.clear();
-		memoryManager.reset();
 	}
 	
 	@Override
 	public int size() {
 		int result = 0;
 		
-		for (long[] addresses : hashCodeMap.values()) {
+		IntIterator hashCodeMapIterator = hashCodeMap.keySet();
+		while (hashCodeMapIterator.hasNext()) {
+			int key = hashCodeMapIterator.next();
+			long[] addresses = hashCodeMap.get(key);
 			result += addresses.length;
 		}
 		
@@ -213,27 +230,35 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	 * </ul>
 	 */
 	protected abstract class AbstractHugeHashSetIterator implements Iterator<E> {
-		private Iterator<Entry<Integer, long[]>> hashCodeMapIterator = hashCodeMap.entrySet().iterator();
-		private Entry<Integer, long[]> currentEntry = null;
+		private IntIterator hashCodeMapIterator = hashCodeMap.keySet();
+		private boolean currentEntryValid = false;
+		private int currentKey;
+		private long[] currentValue;
 		private int currentIndex = 0;
 
 		@Override
 		public boolean hasNext() {
-			return (currentEntry != null && currentIndex + 1 < currentEntry.getValue().length) || hashCodeMapIterator.hasNext();
+			return (currentEntryValid && currentIndex + 1 < currentValue.length) || hashCodeMapIterator.hasNext();
 		}
 
 		@Override
 		public E next() {
 			currentIndex++;
-			if (currentEntry == null || currentIndex >= currentEntry.getValue().length) {
+			if (!currentEntryValid || currentIndex >= currentValue.length) {
 				currentIndex = 0;
-				currentEntry = hashCodeMapIterator.hasNext() ? hashCodeMapIterator.next() : null;
+				if (hashCodeMapIterator.hasNext()) {
+					currentKey = hashCodeMapIterator.next();
+					currentValue = hashCodeMap.get(currentKey);
+					currentEntryValid = true;
+				} else {
+					currentEntryValid = false;
+				}
 			}
-			if (currentEntry == null) {
+			if (!currentEntryValid) {
 				throw new NoSuchElementException();
 			}
 
-			long[] addresses = currentEntry.getValue();
+			long[] addresses = currentValue;
 			long address = addresses[currentIndex];
 			return readElement(address);
 		}
@@ -246,7 +271,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		 * <p>Immutable subclasses can call this method from the builder.</p>
 		 */
 		protected void removeInternal() {
-			long[] addresses = currentEntry.getValue();
+			long[] addresses = currentValue;
 			long address = addresses[currentIndex];
 			memoryManager.free(address);
 			
@@ -258,9 +283,30 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 				long[] newAddresses = new long[addresses.length - 1];
 				System.arraycopy(addresses, 0, newAddresses, 0, currentIndex);
 				System.arraycopy(addresses, currentIndex+1, newAddresses, currentIndex, addresses.length - currentIndex - 1);
-				currentEntry.setValue(newAddresses);
+				currentValue = newAddresses;
+				hashCodeMap.put(currentKey, newAddresses);
 				currentIndex--;
 			}
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder result = new StringBuilder();
+			result.append(getClass().getSimpleName());
+			result.append("{iterator=");
+			result.append(hashCodeMapIterator);
+			result.append(", valid=");
+			result.append(currentEntryValid);
+			result.append(", index=");
+			result.append(currentIndex);
+			if (currentEntryValid) {
+				result.append(", key=");
+				result.append(currentKey);
+				result.append(", value=");
+				result.append(currentValue);
+			}
+			result.append("}");
+			return result.toString();
 		}
 	}
 }

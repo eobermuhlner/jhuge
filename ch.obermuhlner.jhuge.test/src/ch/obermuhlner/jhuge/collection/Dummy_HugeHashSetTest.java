@@ -13,4 +13,9 @@ public class Dummy_HugeHashSetTest extends AbstractHugeHashSetTest {
 		return new DummyMemoryManager();
 	}
 
+	
+	@Override
+	protected boolean isFaster() {
+		return false;
+	}
 }

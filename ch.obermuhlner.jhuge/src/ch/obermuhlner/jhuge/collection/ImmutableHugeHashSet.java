@@ -30,8 +30,8 @@ s * </ul>
  */
 public class ImmutableHugeHashSet<E> extends AbstractHugeHashSet<E> {
 
-	private ImmutableHugeHashSet(MemoryManager memoryManager, Converter<E> converter) {
-		super(memoryManager, converter);
+	private ImmutableHugeHashSet(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
+		super(memoryManager, converter, faster, capacity);
 	}
 
 	@Override
@@ -60,7 +60,7 @@ public class ImmutableHugeHashSet<E> extends AbstractHugeHashSet<E> {
 		
 		private ImmutableHugeHashSet<E> getSet() {
 			if (result == null) {
-				result = new ImmutableHugeHashSet<E>(getMemoryManager(), getElementConverter());
+				result = new ImmutableHugeHashSet<E>(getMemoryManager(), getElementConverter(), isFaster(), getCapacity());
 			}
 			return result;
 		}

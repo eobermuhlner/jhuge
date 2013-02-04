@@ -146,6 +146,17 @@ public abstract class AbstractCollectionTest {
 	}
 
 	@Test
+	public void testAdd_mutable_null_value() {
+		if (supportsMutable() && supportsNullValues()) {
+			Collection<String> collection = createCollection();
+
+			collection.add(null);
+			assertEquals(1, collection.size());
+			assertEquals(true, collection.contains(null));
+		}
+	}
+
+	@Test
 	public void testAdd_mutable_collision() {
 		if (supportsMutable()) {
 			Collection<String> collection = createCollection();
@@ -339,6 +350,33 @@ public abstract class AbstractCollectionTest {
 			assertEquals(2, collection.size());
 		}
 	}
+
+	@Test
+	public void testClear_not_mutable() {
+		if (!supportsMutable()) {
+			try {
+				Collection<String> collection = createCollection("a");
+				collection.clear();
+				fail("expected UnsupportedOperationException");
+			} catch (UnsupportedOperationException exception) {
+				// expected
+			}
+		}
+	}
+	
+	@Test
+	public void testClear_mutable() {
+		if (supportsMutable()) {
+			Collection<String> collection = createCollection("a", "b", "c");
+			
+			collection.clear();
+			assertEquals(0, collection.size());
+			assertEquals(false, collection.contains("a"));
+			assertEquals(false, collection.contains("b"));
+			assertEquals(false, collection.contains("c"));
+			assertEquals(false, collection.contains("x"));
+		}
+	}
 	
 	@Test
 	public void testIterator_not_empty() {
@@ -517,6 +555,8 @@ public abstract class AbstractCollectionTest {
 		}
 	}
 
+	private static final boolean DEBUG = true;
+	
 	@Test
 	public void testRandom() {
 		if (supportsMutable()) {
@@ -537,25 +577,25 @@ public abstract class AbstractCollectionTest {
 
 				int operation = random.nextInt(100);
 				if (operation <= 1) {
-					//System.out.println(desc + " : clear()");
+					if (DEBUG) System.out.println(desc + " : clear()");
 					collection.clear();
 					assertEquals(desc, 0, collection.size());
 					assertEquals(desc, true, collection.isEmpty());
 
 				} else if (operation <= 5) {
 					int step = random.nextInt(3) + 3;
-					//System.out.println(desc + " : remove every " + step);
+					if (DEBUG) System.out.println(desc + " : remove every " + step);
 					removeEveryFewElements(collection.iterator(), step);
 
 
 				} else if (operation <= 50) {
-					//System.out.println(desc + " : add(" + r + ")");
+					if (DEBUG) System.out.println(desc + " : add(" + r + ")");
 					collection.add(r);
 					assertEquals(desc, true, collection.contains(r));
 					assertEquals(desc, false, collection.isEmpty());
 					
 				} else if (operation <= 100) {
-					//System.out.println(desc + " : remove(" + r + ")");
+					if (DEBUG) System.out.println(desc + " : remove(" + r + ")");
 					boolean found = collection.contains(r);
 					int oldSize = collection.size();
 					assertEquals(desc, found, collection.remove(r));

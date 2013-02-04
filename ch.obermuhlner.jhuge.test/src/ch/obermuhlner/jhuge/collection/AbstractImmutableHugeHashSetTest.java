@@ -67,18 +67,18 @@ public abstract class AbstractImmutableHugeHashSetTest extends AbstractSetTest {
 
 	@Test
 	public void testBuilder_bufferSize() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().bufferSize(1234).build();
+		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().bufferSize(12346).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(1234, memoryManager.getBufferSize());
+		assertEquals(12346, memoryManager.getBufferSize());
 	}
 
 	@Test
 	public void testBuilder_blockSize() {
-		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().blockSize(3456).build();
+		ImmutableHugeHashSet<Integer> list = new ImmutableHugeHashSet.Builder<Integer>().blockSize(34567).build();
 		assertEquals(true, list.getMemoryManager() instanceof MemoryMappedFileManager);
 		MemoryMappedFileManager memoryManager = (MemoryMappedFileManager) list.getMemoryManager();
-		assertEquals(3456, memoryManager.getBlockSize());
+		assertEquals(34567, memoryManager.getBlockSize());
 	}
 
 	@Test(expected = IllegalStateException.class)

@@ -116,6 +116,22 @@ public class HugeLongArray implements LongArray {
 		
 		return oldValue;
 	}
+	
+	/**
+	 * Sets the size of the array.
+	 * 
+	 * @param newSize the new size
+	 */
+	public void setSize(int newSize) {
+		byte[] data = memoryManager.read(address);
+		if (data.length < newSize * ELEMENT_SIZE) {
+			byte[] newData = new byte[newSize * ELEMENT_SIZE];
+			System.arraycopy(data, 0, newData, 0, size * ELEMENT_SIZE);
+			memoryManager.free(address);
+			address = memoryManager.allocate(newData);
+		}
+		size = newSize;
+	}
 
 	@Override
 	public void clear() {
@@ -125,6 +141,21 @@ public class HugeLongArray implements LongArray {
 	@Override
 	public int size() {
 		return size;
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{size=" + size + "}";
+//		StringBuilder result = new StringBuilder();
+//		result.append('[');
+//		for (int i = 0; i < size; i++) {
+//			if (i > 0) {
+//				result.append(", ");
+//			}
+//			result.append(get(i));
+//		}
+//		result.append(']');
+//		return result.toString();
 	}
 
 	private void checkSize(int index) {

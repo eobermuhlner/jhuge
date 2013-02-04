@@ -10,7 +10,12 @@ public class MemoryMappedFile_HugeHashSetTest extends AbstractHugeHashSetTest {
 
 	@Override
 	protected MemoryManager createMemoryManager() {
-		return new MemoryMappedFileManager(150);
+		return new MemoryMappedFileManager(20000);
 	}
 
+	
+	@Override
+	protected boolean isFaster() {
+		return false;
+	}
 }

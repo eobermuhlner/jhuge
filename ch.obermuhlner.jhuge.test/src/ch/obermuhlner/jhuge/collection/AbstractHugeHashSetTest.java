@@ -24,8 +24,16 @@ public abstract class AbstractHugeHashSetTest extends AbstractSetTest {
 	protected <E> Set<E> createSet(E... initial) {
 		MemoryManager memoryManager = createMemoryManager();
 
-		return new HugeHashSet.Builder<E>().memoryManager(memoryManager).addAll(initial).build();
+		Builder<E> builder = new HugeHashSet.Builder<E>().memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		builder.addAll(initial);
+		
+		return builder.build();
 	}
+
+	protected abstract boolean isFaster();
 
 	protected abstract MemoryManager createMemoryManager();
 

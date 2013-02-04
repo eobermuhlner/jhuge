@@ -4,7 +4,7 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
 /**
- * Tests a faster {@link ImmutableHugeArrayList} with a {@link MemoryMappedFileManager}.
+ * Tests {@link ImmutableHugeArrayList} in faster mode with a {@link MemoryMappedFileManager}.
  */
 public class Fast_MemoryMappedFile_ImmutableHugeArrayListTest extends AbstractImmutableHugeArrayListTest {
 

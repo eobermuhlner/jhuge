@@ -24,8 +24,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  */
 public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
 
-	private HugeHashSet(MemoryManager memoryManager, Converter<E> converter) {
-		super(memoryManager, converter);
+	private HugeHashSet(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
+		super(memoryManager, converter, faster, capacity);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
 		
 		private HugeHashSet<E> getSet() {
 			if (result == null) {
-				result = new HugeHashSet<E>(getMemoryManager(), getElementConverter());
+				result = new HugeHashSet<E>(getMemoryManager(), getElementConverter(), isFaster(), getCapacity());
 			}
 			return result;
 		}
