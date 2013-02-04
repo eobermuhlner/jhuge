@@ -8,6 +8,8 @@ import java.util.Map;
 
 import ch.obermuhlner.jhuge.collection.HugeArrayList;
 import ch.obermuhlner.jhuge.collection.HugeHashMap;
+import ch.obermuhlner.jhuge.collection.ImmutableHugeHashMap;
+import ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet;
 import ch.obermuhlner.jhuge.collection.ImmutableHugeHashSet2;
 
 
@@ -34,35 +36,31 @@ public class MeasureHeap {
 	@SuppressWarnings("unused")
 	private static HugeArrayList<String> staticFastHugeArrayList;
 	@SuppressWarnings("unused")
-	private static ImmutableHugeHashSet2<String> staticImmutableHugeHashSet;
+	private static ImmutableHugeHashSet<String> staticImmutableHugeHashSet;
 	@SuppressWarnings("unused")
-	private static ImmutableHugeHashSet2<String> staticFastImmutableHugeHashSet;
+	private static ImmutableHugeHashSet<String> staticFastImmutableHugeHashSet;
 	@SuppressWarnings("unused")
-	private static HashMap<Integer, String> staticHashMap;
+	private static HashMap<String, String> staticHashMap;
 	@SuppressWarnings("unused")
-	private static HugeHashMap<Integer, String> staticHugeHashMap;
+	private static HugeHashMap<String, String> staticHugeHashMap;
+	@SuppressWarnings("unused")
+	private static ImmutableHugeHashMap<String, String> staticImmutableHugeHashMap;
 	
 	private static void measureHeapMemory() {
 		int count = 10000;
-		List<String> dataList = new ArrayList<String>();
-		for (int i = 0; i < count; i++) {
-			dataList.add(randomString(i));
-		}
-		Map<String, String> dataMap = new HashMap<String, String>();
-		for (int i = 0; i < count; i++) {
-			dataMap.put("key"+i, randomString(i));
-		}
 		
 		final int bufferSize = 10 * 1024 * 1024;
-		staticArrayList = new ArrayList<String>(dataList);
-		staticHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
-		staticFastHugeArrayList = new HugeArrayList.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
-		staticImmutableHugeHashSet = new ImmutableHugeHashSet2.Builder<String>().bufferSize(bufferSize).addAll(dataList).build();
-		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet2.Builder<String>().bufferSize(bufferSize).faster().addAll(dataList).build();
-//		staticHashMap = new HashMap<Integer, String>(dataMap);
-//		staticHugeHashMap = new HugeHashMap.Builder<Integer, String>().bufferSize(bufferSize).putAll(dataMap).build();
+		staticArrayList = fillCollection(new ArrayList<String>(), count);
+		staticHugeArrayList = fillCollection(new HugeArrayList.Builder<String>().bufferSize(bufferSize).build(), count);
+		staticFastHugeArrayList = fillCollection(new HugeArrayList.Builder<String>().bufferSize(bufferSize).faster().build(), count);
+		staticImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).addAll(fillCollection(new ArrayList<String>(), count)).build();
+		staticFastImmutableHugeHashSet = new ImmutableHugeHashSet.Builder<String>().bufferSize(bufferSize).faster().addAll(fillCollection(new ArrayList<String>(), count)).build();
+		staticHashMap = fillMap(new HashMap<String, String>(), count);
+		staticHugeHashMap = fillMap(new HugeHashMap.Builder<String, String>().bufferSize(bufferSize).build(), count);
+		staticImmutableHugeHashMap = new ImmutableHugeHashMap.Builder<String, String>().bufferSize(bufferSize).putAll(fillMap(new HashMap<String, String>(), count)).build();
 		
 		System.out.println("Ready to take heapdump.");
+		System.out.println("Open the heapdump in MemoryAnalyzer and look for the static fields of MeasureHeap.");
 		
 		try {
 			Thread.sleep(100 * 1000);
@@ -71,6 +69,20 @@ public class MeasureHeap {
 		}
 
 		System.out.println("Goodbye.");
+	}
+
+	private static <T extends Collection<String>> T fillCollection(T collection, int count) {
+		for (int i = 0; i < count; i++) {
+			collection.add(randomString(i));
+		}
+		return collection;
+	}
+	
+	private static <T extends Map<String, String>> T fillMap(T map, int count) {
+		for (int i = 0; i < count; i++) {
+			map.put("key"+i, randomString(i));
+		}
+		return map;
 	}
 	
 	private static String randomString(int value) {
