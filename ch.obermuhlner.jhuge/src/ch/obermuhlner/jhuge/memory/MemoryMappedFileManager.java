@@ -283,6 +283,11 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		return snapshot;
 	}
 	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{buffers=" + buffers.size() + ", bufferSize=" + bufferSize + ", freeblocks=" + freeBlocks.size() + "}";
+	}
+	
 	private int getLength(long address) {
 		int bufferIndex = (int) (address / bufferSize);
 		int bufferPos = (int) (address % bufferSize);

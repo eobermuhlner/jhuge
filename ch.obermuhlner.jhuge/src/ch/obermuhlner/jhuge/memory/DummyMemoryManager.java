@@ -81,4 +81,9 @@ public class DummyMemoryManager extends AbstractMemoryManager {
 	public void reset() {
 		blocks.clear();
 	}
+	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{blocks=" + blocks.size() + "}";
+	}
 }
