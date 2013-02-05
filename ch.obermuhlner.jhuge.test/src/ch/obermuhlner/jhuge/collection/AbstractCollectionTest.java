@@ -19,8 +19,6 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import ch.obermuhlner.jhuge.collection.internal.LongArray;
-
 /**
  * Abstract base class to test {@link Collection}.
  */
