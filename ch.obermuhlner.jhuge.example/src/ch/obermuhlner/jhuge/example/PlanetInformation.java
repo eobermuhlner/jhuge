@@ -24,9 +24,6 @@ public class PlanetInformation {
 
 	private long initialUsedMemory;
 
-	public PlanetInformation() {
-	}
-
 	private void setupInitialUsedMemory() {
 		System.gc();
 		long freeMemory = Runtime.getRuntime().freeMemory();
