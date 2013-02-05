@@ -781,9 +781,12 @@ public abstract class AbstractMapTest {
 
 	@Test
 	public void testToString() {
-		Map<Integer, String> map = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
 
-		assertNotNull(map.toString());
+			assertNotNull(map.toString());
+		}
 	}
 
 
