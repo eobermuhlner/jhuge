@@ -4,17 +4,17 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
 /**
- * Tests {@link HugeHashMap} with a {@link MemoryMappedFileManager}.
+ * Tests {@link HugeHashMap} in faster mode with a {@link MemoryMappedFileManager}.
  */
-public class MemoryMappedFile_HugeHashMapTest extends AbstractHugeHashMapTest {
+public class Fast_MemoryMappedFile_HugeHashMapTest extends AbstractHugeHashMapTest {
 
 	@Override
 	protected MemoryManager createMemoryManager() {
-		return new MemoryMappedFileManager(1024);
+		return new MemoryMappedFileManager(150);
 	}
 
 	@Override
 	protected boolean isFaster() {
-		return false;
+		return true;
 	}
 }

@@ -383,14 +383,12 @@ public class ImmutableHugeHashSet2<E> extends AbstractSet<E> {
 			built = true;
 
 			// sort entries by size - O(n * log(n))
-			System.out.println("Sorting ...");
 			Collections.sort(entries, new Comparator<Entry>() {
 				@Override
 				public int compare(Entry o1, Entry o2) {
 					return o1.hashCode == o2.hashCode ? 0 : o1.hashCode < o2.hashCode ? -1 : +1;
 				}
 			});
-			System.out.println("Sorted");
 			
 			if (potentialDuplicateElements) {
 				// search for duplicate entries and remove them - O(n)
@@ -398,7 +396,6 @@ public class ImmutableHugeHashSet2<E> extends AbstractSet<E> {
 				List<Entry> sameHashCodeEntries = new ArrayList<Entry>();
 				sameHashCodeEntries.add(entries.get(index--));
 				while (index >= 0) {
-					System.out.println("Checking " + index);
 					Entry entry = entries.get(index);
 					if (sameHashCodeEntries.get(0).hashCode == entry.hashCode) {
 						for (Entry sameHashCodeEntry : sameHashCodeEntries) {
@@ -416,19 +413,16 @@ public class ImmutableHugeHashSet2<E> extends AbstractSet<E> {
 				}
 			}
 			
-			System.out.println("Storing Infrastructure ...");
 			int size = entries.size();
 			IntArray hashCodes = isFaster() ? new JavaIntArray(size) : new HugeIntArray(getMemoryManager(), size);
 			LongArray addresses = isFaster() ? new JavaLongArray(size) : new HugeLongArray(getMemoryManager(), size);
 			for (int i = 0; i < size; i++) {
 				Entry entry = entries.get(i);
 				
-				System.out.println("Storing #" + i);
 				hashCodes.add(entry.hashCode);
 				addresses.add(entry.address);
 			}
 			
-			System.out.println("Creating instance ...");
 			return new ImmutableHugeHashSet2<E>(getMemoryManager(), getElementConverter(), hashCodes, addresses);
 		}
 

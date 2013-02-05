@@ -39,6 +39,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	}
 	
 	private void initialize(int capacity) {
+		countHashCodes = 0;
 		addresses = new HugeLongArray(memoryManager, capacity);
 		addresses.setSize(capacity);
 		for (int i = 0; i < capacity; i++) {
@@ -48,10 +49,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	
 	@Override
 	public void put(int key, long[] value) {
-		if ((int)(addresses.size() * loadFactor) < countHashCodes) {
-			grow();
-		}
-		
+		growIfNecessary();
 		int index = hashIndex(key);
 
 		long address = addresses.get(index);
@@ -63,10 +61,10 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		}
 
 		if (newAddress != address) {
+			addresses.set(index, newAddress);
 			if (address == NO_ADDRESS) {
 				countHashCodes++;
 			}
-			addresses.set(index, newAddress);
 		}
 	}
 
@@ -142,6 +140,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		}
 		
 		byte[] data = memoryManager.read(address);
+		printData("BEFORE remove " + key, data);
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 		
 		int count = byteBuffer.getInt();
@@ -149,15 +148,15 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 			int storedKey = byteBuffer.getInt();
 			if (storedKey == key) {
 				memoryManager.free(address);
-				countHashCodes--;
 				addresses.set(index, NO_ADDRESS);
 				size--;
+				countHashCodes--;
 				return;
 			}
 		}
 		
 		long newAddress = removeEntryInCopy(byteBuffer, key);
-		if  (newAddress == -1) {
+		if  (newAddress == NO_ADDRESS) {
 			return;
 		}
 		
@@ -181,7 +180,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 				addresses.set(i, NO_ADDRESS);
 			}
 		}
-		
+		countHashCodes = 0;
 		size = 0;
 	}
 
@@ -196,7 +195,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	}
 	
 	private long setValueInNew(int key, long[] value) {
-		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(512);
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(128);
 		DataOutputStream out = new DataOutputStream(byteStream);
 		
 		try {
@@ -218,31 +217,42 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	
 	private long setEntryInOld(long address, int key, long[] value) {
 		byte[] data = memoryManager.read(address);
+		printData("BEFORE setEntryInOld " + key, data);
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-		
+
+		boolean found = findKey(byteBuffer, key);
+
+		memoryManager.free(address);
+		return setEntryInCopy(byteBuffer, !found, key, value);
+
+		/*
 		int count = byteBuffer.getInt();
 		for (int i = 0; i < count; i++) {
 			int storedKey = byteBuffer.getInt();
 			int storedArrayLength = byteBuffer.getInt();
 			if (storedKey == key) {
-				if (storedArrayLength == value.length) {
-					for (int j = 0; j < storedArrayLength; j++) {
-						byteBuffer.putLong(value[j]);
-					}
-					printData("setEntryInOld " + key + Arrays.toString(value), data);
-					memoryManager.write(address, data);
-					return address;
-				}
+//				if (storedArrayLength == value.length) {
+//					for (int j = 0; j < storedArrayLength; j++) {
+//						byteBuffer.putLong(value[j]);
+//					}
+//					printData("setEntryInOld " + key + Arrays.toString(value), data);
+//					memoryManager.write(address, data);
+//					return address;
+//				}
 				memoryManager.free(address);
 				return setEntryInCopy(byteBuffer, false, key, value);
+			}
+			for (int j = 0; j < storedArrayLength; j++) {
+				byteBuffer.getLong();
 			}
 		}
 		memoryManager.free(address);
 		return setEntryInCopy(byteBuffer, true, key, value);
+		*/
 	}
 
 	private long setEntryInCopy(ByteBuffer byteBuffer, boolean append, int key, long[] value) {
-		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(512);
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(128);
 		DataOutputStream out = new DataOutputStream(byteStream);
 		
 		try {
@@ -256,6 +266,9 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 				out.writeInt(storedKey);
 				if (storedKey == key) {
 					assert !append;
+					for (int j = 0; j < storedArrayLength; j++) {
+						byteBuffer.getLong();
+					}				
 					out.writeInt(value.length);
 					for (int j = 0; j < value.length; j++) {
 						out.writeLong(value[j]);
@@ -292,7 +305,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	 * @return the address of the newly allocated buffer (with the key removed) or -1 if the key was not found in the {@link ByteBuffer}
 	 */
 	private long removeEntryInCopy(ByteBuffer byteBuffer, int key) {
-		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(512);
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(128);
 		DataOutputStream out = new DataOutputStream(byteStream);
 		
 		boolean found = findKey(byteBuffer, key);
@@ -340,23 +353,23 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		return count;
 	}
 
-	private void printData(String message, byte[] data) {
-		System.out.println("--- " + message);
-		System.out.println("data.length = " + data.length);
-		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-		
-		int count = byteBuffer.getInt();
-		System.out.println("count = " + count);
-		for (int i = 0; i < count; i++) {
-			int storedKey = byteBuffer.getInt();
-			int storedArrayLength = byteBuffer.getInt();
-			System.out.println("#" + i + " key = " + storedKey);
-			System.out.println("#" + i + " value.length = " + storedArrayLength);
-			for (int j = 0; j < storedArrayLength; j++) {
-				long storedArrayElement = byteBuffer.getLong();
-				System.out.println("#" + i + " value[" + j + "] = " + storedArrayElement);
-			}
-		}		
+	private static void printData(String message, byte[] data) {
+//		System.out.println("--- " + message);
+//		System.out.println("data.length = " + data.length);
+//		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+//		
+//		int count = byteBuffer.getInt();
+//		System.out.println("count = " + count);
+//		for (int i = 0; i < count; i++) {
+//			int storedKey = byteBuffer.getInt();
+//			int storedArrayLength = byteBuffer.getInt();
+//			System.out.println("#" + i + " key = " + storedKey);
+//			System.out.println("#" + i + " value.length = " + storedArrayLength);
+//			for (int j = 0; j < storedArrayLength; j++) {
+//				long storedArrayElement = byteBuffer.getLong();
+//				System.out.println("#" + i + " value[" + j + "] = " + storedArrayElement);
+//			}
+//		}		
 	}
 
 	private boolean findKey(ByteBuffer byteBuffer, int key) {
@@ -375,6 +388,15 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		return false;
 	}
 	
+	private void growIfNecessary() {
+		int thresholdSize = (int)(addresses.size() * loadFactor);
+		if (countHashCodes < thresholdSize) {
+			return;
+		}
+		
+		grow();
+	}
+
 	private void grow() {
 		HugeLongArray oldAddresses = addresses;
 		initialize(oldAddresses.size() * 2);
@@ -391,6 +413,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 					if (addresses.get(index) == NO_ADDRESS) {
 						// possible to do a cheap copy, since only 1 key/value pair and hashIndex in new growing map is still empty - just point to the old address
 						addresses.set(index, address);
+						countHashCodes++;
 						cheap = true;
 					}
 				}
@@ -436,7 +459,8 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 
 		@Override
 		public boolean hasNext() {
-			return nextEntriesIndex < nextEntriesCount && nextAddressIndex < addresses.size();
+			int n = addresses.size();
+			return nextEntriesIndex < nextEntriesCount && nextAddressIndex < n;
 		}
 
 		@Override
@@ -462,13 +486,16 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 			}
 
 			nextEntriesIndex = 0;
-			while (++nextAddressIndex < addresses.size()) {
+			int n = addresses.size();
+			while (++nextAddressIndex < n) {
 				long address = addresses.get(nextAddressIndex);
 				if (address != NO_ADDRESS) {
 					nextEntriesCount = getEntriesCount(address);
 					return;
 				}
 			}
+			
+			nextAddressIndex = Integer.MAX_VALUE;
 		}
 		
 		@Override

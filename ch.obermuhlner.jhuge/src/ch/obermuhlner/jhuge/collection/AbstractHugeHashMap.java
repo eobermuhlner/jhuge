@@ -7,7 +7,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import ch.obermuhlner.jhuge.collection.internal.IntObjectMap;
+import ch.obermuhlner.jhuge.collection.internal.HugeIntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.IntIterator;
+import ch.obermuhlner.jhuge.collection.internal.IntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.JavaIntLongArrayMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
@@ -34,7 +37,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	private final Converter<K> keyConverter;
 	private final Converter<V> valueConverter;
 
-	private final IntObjectMap<long[]> hashCodeMap = new IntObjectMap<long[]>();
+	private final IntLongArrayMap hashCodeMap;
 
 	/**
 	 * Constructs an {@link AbstractHugeHashMap}.
@@ -42,11 +45,15 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	 * @param memoryManager the {@link MemoryManager}
 	 * @param keyConverter the key {@link Converter}
 	 * @param valueConverter the value {@link Converter}
+	 * @param faster <code>true</code> to trade memory consumption for improved performance
+	 * @param capacity the initial capacity
 	 */
-	protected AbstractHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
+	protected AbstractHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter, boolean faster, int capacity) {
 		this.memoryManager = memoryManager;
 		this.keyConverter = keyConverter;
 		this.valueConverter = valueConverter;
+		
+		hashCodeMap = faster ? new JavaIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
 	}
 	
 	/**
@@ -133,7 +140,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	
 	@Override
 	public boolean isEmpty() {
-		return hashCodeMap.isEmpty();
+		return hashCodeMap.size() == 0;
 	}
 	
 	/**
@@ -158,10 +165,9 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 			long valueAddress = memoryManager.allocate(valueData);
 			
 			keyValueAddresses = new long[2];
-			hashCodeMap.put(hashCode, keyValueAddresses);
-
 			keyValueAddresses[0] = keyAddress; 
 			keyValueAddresses[1] = valueAddress;
+			hashCodeMap.put(hashCode, keyValueAddresses);
 			return null;
 		} else {
 			for (int i = 0; i < keyValueAddresses.length; i+=2) {
@@ -173,6 +179,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 					memoryManager.free(keyValueAddresses[i+1]);
 					long valueAddress = memoryManager.allocate(valueData);
 					keyValueAddresses[i+1] = valueAddress;
+					hashCodeMap.put(hashCode, keyValueAddresses);
 					return oldValue;
 				}
 			}
@@ -193,8 +200,16 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	 * <p>Immutable subclasses can call this method from the builder.</p>
 	 */
 	protected void clearInternal() {
+		IntIterator hashCodeMapIterator = hashCodeMap.keySet();
+		while (hashCodeMapIterator.hasNext()) {
+			int key = hashCodeMapIterator.next();
+			long[] addresses = hashCodeMap.get(key);
+			for (int j = 0; j < addresses.length; j++) {
+				memoryManager.free(addresses[j]);
+			}
+		}
+		
 		hashCodeMap.clear();
-		memoryManager.reset();
 	}
 	
 	private static long[] append(long[] keyValueAddresses, long keyAddress, long valueAddress) {
@@ -228,7 +243,10 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		@Override
 		public int size() {
 			int result = 0;
-			for (long[] addresses : hashCodeMap.values()) {
+			IntIterator keySet = hashCodeMap.keySet();
+			while(keySet.hasNext()) {
+				int hashCode = keySet.next();
+				long[] addresses = hashCodeMap.get(hashCode);
 				result += addresses.length / 2;
 			}
 			return result;
@@ -239,32 +257,39 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	 * Abstract base class to simplify implementing the iterator of a {@link Map#entrySet() entrySet} of an {@link AbstractHugeHashMap}.
 	 */
 	protected abstract class AbstractEntrySetIterator implements Iterator<Entry<K, V>> {
-		private Iterator<Entry<Integer, long[]>> hashCodeMapIterator = hashCodeMap.entrySet().iterator();
-		private Entry<Integer, long[]> currentEntry = null;
+		private IntIterator hashCodeMapIterator = hashCodeMap.keySet();
+		private int currentHashCode;
+		private long[] currentAddresses;
 		private int currentIndex = 0;
 		
 		@Override
 		public boolean hasNext() {
-			return (currentEntry != null && currentIndex + 2 < currentEntry.getValue().length) || hashCodeMapIterator.hasNext();
+			return (currentAddresses != null && currentIndex + 2 < currentAddresses.length) || hashCodeMapIterator.hasNext();
 		}
 		
 		@Override
 		public Entry<K, V> next() {
 			currentIndex += 2;
-			if (currentEntry == null || currentIndex >= currentEntry.getValue().length) {
+			if (currentAddresses == null || currentIndex >= currentAddresses.length) {
 				currentIndex = 0;
-				currentEntry = hashCodeMapIterator.hasNext() ? hashCodeMapIterator.next() : null;
+				if (hashCodeMapIterator.hasNext()) {
+					currentHashCode = hashCodeMapIterator.next();
+					currentAddresses = hashCodeMap.get(currentHashCode);
+				} else {
+					currentHashCode = 0;
+					currentAddresses = null;
+				}
 			}
-			if (currentEntry == null) {
+			if (currentAddresses == null) {
 				throw new NoSuchElementException();
 			}
 			
-			long[] keyValueAddresses = currentEntry.getValue();
+			long keyAddress = currentAddresses[currentIndex+0];
+			long valueAddress = currentAddresses[currentIndex+1];
 			
-			long keyAddress = keyValueAddresses[currentIndex+0];
-			long valueAddress = keyValueAddresses[currentIndex+1];
-			
-			AbstractEntry entry = createEntry(getKey(keyAddress), getValue(valueAddress));
+			K key = getKey(keyAddress);
+			V value = getValue(valueAddress);
+			AbstractEntry entry = createEntry(key, value);
 			return entry;
 		}
 		
@@ -285,21 +310,25 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		 * <p>Immutable subclasses can call this method from the builder.</p>
 		 */
 		protected void removeInternal () {
-			long[] keyValueAddresses = currentEntry.getValue();
-			long keyAddress = keyValueAddresses[currentIndex+0];
-			long valueAddress = keyValueAddresses[currentIndex+1];
+			if (currentAddresses == null) {
+				throw new NoSuchElementException();
+			}
+
+			long keyAddress = currentAddresses[currentIndex+0];
+			long valueAddress = currentAddresses[currentIndex+1];
 			memoryManager.free(keyAddress);
 			memoryManager.free(valueAddress);
 			
-			if (currentIndex == 0 && currentEntry.getValue().length == 2) {
+			if (currentIndex == 0 && currentAddresses.length == 2) {
 				// remove entire entry
 				hashCodeMapIterator.remove();
 			} else {
 				// remove 1 pair from entry
-				long[] newKeyValueAddresses = new long[keyValueAddresses.length - 2];
-				System.arraycopy(keyValueAddresses, 0, newKeyValueAddresses, 0, currentIndex);
-				System.arraycopy(keyValueAddresses, currentIndex+2, newKeyValueAddresses, currentIndex, keyValueAddresses.length - currentIndex - 2);
-				currentEntry.setValue(newKeyValueAddresses);
+				long[] newKeyValueAddresses = new long[currentAddresses.length - 2];
+				System.arraycopy(currentAddresses, 0, newKeyValueAddresses, 0, currentIndex);
+				System.arraycopy(currentAddresses, currentIndex+2, newKeyValueAddresses, currentIndex, currentAddresses.length - currentIndex - 2);
+				hashCodeMap.put(currentHashCode, newKeyValueAddresses);
+				currentAddresses = newKeyValueAddresses;
 				currentIndex -= 2;
 			}
 		}

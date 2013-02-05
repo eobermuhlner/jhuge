@@ -589,6 +589,7 @@ public abstract class AbstractMapTest {
 			Collection<Integer> expectedKeys = new ArrayList<Integer>(Arrays.asList(1, 2, 3)); 
 			Collection<String> expectedValues = new ArrayList<String>(Arrays.asList("a", "b", "c")); 
 			for (Entry<Integer, String> entry : entrySet) {
+				assertNotNull(entry.toString());
 				Integer key = entry.getKey();
 				assertEquals(true, expectedKeys.contains(key));
 				expectedKeys.remove(key);
@@ -777,7 +778,17 @@ public abstract class AbstractMapTest {
 			assertEquals("b-modified", map.get(2));
 		}
 	}
-	
+
+	@Test
+	public void testToString() {
+		Map<Integer, String> map = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
+
+		assertNotNull(map.toString());
+	}
+
+
+	private static final boolean DEBUG = false;
+
 	@Test
 	public void testRandom() {
 		if (supportsMutable()) {
@@ -786,8 +797,10 @@ public abstract class AbstractMapTest {
 			@SuppressWarnings("unchecked")
 			Map<String, String> map = createMap();
 			
-			final int count = 1000;
+			final int count = 10000;
 			for (int i = 0; i < count; i++) {
+				String desc = "step=" + i;
+
 				String randomKey = String.valueOf(random.nextInt(100));
 				if (supportsNullValues()) {
 					if (random.nextInt(100) == 0) {
@@ -803,28 +816,35 @@ public abstract class AbstractMapTest {
 
 				int operation = random.nextInt(100);
 				if (operation <= 1) {
+					if (DEBUG) System.out.println(desc + " : clear()");
 					map.clear();
 					assertEquals(0, map.size());
 					assertEquals(true, map.isEmpty());
 					
-				} else if (operation <= 5) {
+				} else if (operation <= 3) {
 					int step = random.nextInt(3) + 3;
+					if (DEBUG) System.out.println(desc + " : remove every " + step + " elements from keySet()");
 					removeEveryFewElements(map.keySet().iterator(), step);
 
-				} else if (operation <= 10) {
+				} else if (operation <= 6) {
 					int step = random.nextInt(3) + 3;
+					if (DEBUG) System.out.println(desc + " : remove every " + step + " elements from values()");
 					removeEveryFewElements(map.values().iterator(), step);
+
+				} else if (operation <= 9) {
+					int step = random.nextInt(3) + 3;
+					if (DEBUG) System.out.println(desc + " : remove every " + step + " elements from entrySet()");
+					removeEveryFewElements(map.entrySet().iterator(), step);
 
 				} else if (operation <= 15) {
 					int step = random.nextInt(3) + 3;
-					removeEveryFewElements(map.entrySet().iterator(), step);
-
-				} else if (operation <= 20) {
-					int step = random.nextInt(3) + 3;
+					if (DEBUG) System.out.println(desc + " : set every " + step + " value to " + randomValue + " in entrySet() size " + map.size());
 					int index = 0;
 					Set<Entry<String, String>> entrySet = map.entrySet();
 					for (Entry<String, String> entry : entrySet) {
+						if (DEBUG) System.out.println(desc + " : entry " + entry.getKey() + " = " + entry.getValue() + " in entrySet()");
 						if (index % step == 0) {
+							if (DEBUG) System.out.println(desc + " : set #" + index + " value to " + randomValue + " in entrySet()");
 							entry.setValue(randomValue);
 							assertEquals(randomValue, entry.getValue());
 							assertEquals(randomValue, map.get(entry.getKey()));
@@ -832,13 +852,15 @@ public abstract class AbstractMapTest {
 						index++;
 					}
 
-				} else if (operation <= 70) {
+				} else if (operation <= 95) {
+					if (DEBUG) System.out.println(desc + " : put " + randomKey + "=" + randomValue);
 					map.put(randomKey, randomValue);
 					assertEquals(true, map.containsKey(randomKey));
 					assertEquals(true, map.containsValue(randomValue));
 					assertEquals(false, map.isEmpty());
 					
 				} else if (operation <= 100) {
+					if (DEBUG) System.out.println(desc + " : remove " + randomKey);
 					map.remove(randomKey);
 				}
 			}

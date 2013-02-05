@@ -129,6 +129,10 @@ public class HugeLongArray implements LongArray {
 			System.arraycopy(data, 0, newData, 0, size * ELEMENT_SIZE);
 			memoryManager.free(address);
 			address = memoryManager.allocate(newData);
+		} else {
+			for (int i = newSize; i < size; i++) {
+				set(i, 0);
+			}
 		}
 		size = newSize;
 	}

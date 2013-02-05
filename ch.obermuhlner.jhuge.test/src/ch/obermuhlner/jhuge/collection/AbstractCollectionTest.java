@@ -5,6 +5,7 @@ import static ch.obermuhlner.jhuge.collection.HashCodeCollisionsTest.COLLISION_1
 import static ch.obermuhlner.jhuge.collection.HashCodeCollisionsTest.COLLISION_2;
 import static ch.obermuhlner.jhuge.collection.HashCodeCollisionsTest.COLLISION_3;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ import java.util.Random;
 import java.util.Set;
 
 import org.junit.Test;
+
+import ch.obermuhlner.jhuge.collection.internal.LongArray;
 
 /**
  * Abstract base class to test {@link Collection}.
@@ -387,18 +390,22 @@ public abstract class AbstractCollectionTest {
 			Collection<String> expectedElements = new ArrayList<String>(Arrays.asList("a", "b", "c"));
 			String element;
 			
+			assertNotNull(iterator.toString());
 			assertEquals(true, iterator.hasNext());
 			element = iterator.next();
 			assertEquals(true, expectedElements.remove(element));
 			
+			assertNotNull(iterator.toString());
 			assertEquals(true, iterator.hasNext());
 			element = iterator.next();
 			assertEquals(true, expectedElements.remove(element));
 			
+			assertNotNull(iterator.toString());
 			assertEquals(true, iterator.hasNext());
 			element = iterator.next();
 			assertEquals(true, expectedElements.remove(element));
 			
+			assertNotNull(iterator.toString());
 			assertEquals(false, iterator.hasNext());
 			assertEquals(true, expectedElements.isEmpty());
 			
@@ -540,6 +547,13 @@ public abstract class AbstractCollectionTest {
 	}
 	
 	@Test
+	public void testToString() {
+		Collection<String> collection = createCollection("a", "b", "c");
+
+		assertNotNull(collection.toString());
+	}
+
+	@Test
 	public void testLarge() {
 		{
 			Set<String> testdata = createTestData(1000);
@@ -555,7 +569,7 @@ public abstract class AbstractCollectionTest {
 		}
 	}
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	
 	@Test
 	public void testRandom() {
@@ -564,7 +578,7 @@ public abstract class AbstractCollectionTest {
 			
 			Collection<String> collection = createCollection();
 			
-			final int count = 1000;
+			final int count = 10000;
 			for (int i = 0; i < count; i++) {
 				String desc = "step=" + i;
 				
@@ -588,7 +602,7 @@ public abstract class AbstractCollectionTest {
 					removeEveryFewElements(collection.iterator(), step);
 
 
-				} else if (operation <= 50) {
+				} else if (operation <= 80) {
 					if (DEBUG) System.out.println(desc + " : add(" + r + ")");
 					collection.add(r);
 					assertEquals(desc, true, collection.contains(r));

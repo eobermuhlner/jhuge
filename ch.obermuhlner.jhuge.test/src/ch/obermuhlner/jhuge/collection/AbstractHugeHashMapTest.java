@@ -25,9 +25,16 @@ public abstract class AbstractHugeHashMapTest extends AbstractMutableMapTest {
 	protected <K, V> Map<K, V> createEmptyMap() {
 		MemoryManager memoryManager = createMemoryManager();
 
-		return new HugeHashMap.Builder<K, V>().memoryManager(memoryManager).build();
+		Builder<K, V> builder = new HugeHashMap.Builder<K, V>();
+		builder.memoryManager(memoryManager);
+		if (isFaster()) {
+			builder.faster();
+		}
+		return builder.build();
 	}
 
+	protected abstract boolean isFaster();
+	
 	protected abstract MemoryManager createMemoryManager();
 
 	@Override

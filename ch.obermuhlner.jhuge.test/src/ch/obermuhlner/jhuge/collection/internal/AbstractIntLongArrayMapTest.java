@@ -1,6 +1,7 @@
 package ch.obermuhlner.jhuge.collection.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static ch.obermuhlner.jhuge.converter.AbstractSerializableConverterTest.assertArrayEquals;
 
@@ -258,6 +259,13 @@ public abstract class AbstractIntLongArrayMapTest {
 	}
 
 	@Test
+	public void testToString() {
+		IntLongArrayMap map = createIntLongArrayMap();
+
+		assertNotNull(map.toString());
+	}
+	
+	@Test
 	public void testLarge() {
 		final int n = 1000;
 		IntLongArrayMap map = createIntLongArrayMap();
@@ -271,7 +279,6 @@ public abstract class AbstractIntLongArrayMapTest {
 			long[] value = values[i % values.length];
 			
 			map.put(i, value);
-			System.out.println(map);
 			assertEquals(true, map.containsKey(key));
 			assertArrayEquals(value, map.get(key));
 			assertEquals(i + 1, map.size());

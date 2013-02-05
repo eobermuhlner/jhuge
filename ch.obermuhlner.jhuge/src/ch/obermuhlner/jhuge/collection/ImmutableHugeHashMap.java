@@ -31,8 +31,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  */
 public class ImmutableHugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 
-	private ImmutableHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter) {
-		super(memoryManager, keyConverter, valueConverter);
+	private ImmutableHugeHashMap(MemoryManager memoryManager, Converter<K> keyConverter, Converter<V> valueConverter, boolean faster, int capacity) {
+		super(memoryManager, keyConverter, valueConverter, faster, capacity);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class ImmutableHugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 		
 		private ImmutableHugeHashMap<K, V> getMap() {
 			if (result == null) {
-				result = new ImmutableHugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter());
+				result = new ImmutableHugeHashMap<K, V>(getMemoryManager(), getKeyConverter(), getValueConverter(), isFaster(), getCapacity());
 			}
 			return result;
 		}

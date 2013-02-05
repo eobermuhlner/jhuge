@@ -13,4 +13,8 @@ public class Dummy_HugeHashMapTest extends AbstractHugeHashMapTest {
 		return new DummyMemoryManager();
 	}
 
+	@Override
+	protected boolean isFaster() {
+		return false;
+	}
 }

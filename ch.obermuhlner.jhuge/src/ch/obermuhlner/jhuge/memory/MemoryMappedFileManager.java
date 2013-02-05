@@ -217,10 +217,8 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		freeBlocks.clear();
 		emptyBlockAddress = -1;
 		for (int i = 0; i < buffers.size(); i++) {
-			//destroyDirectByteBuffer(buffer);
 			initFreeBuffer(i, buffers.get(i));
 		}
-		//buffers.clear();
 	}
 	
 	/**

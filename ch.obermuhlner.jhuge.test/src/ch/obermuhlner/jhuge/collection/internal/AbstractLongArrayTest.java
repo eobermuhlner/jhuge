@@ -1,6 +1,7 @@
 package ch.obermuhlner.jhuge.collection.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -159,6 +160,13 @@ public abstract class AbstractLongArrayTest {
 		} catch (IndexOutOfBoundsException exception) {
 			// expected
 		}
+	}
+
+	@Test
+	public void testToString() {
+		LongArray array = createLongArray();
+
+		assertNotNull(array.toString());
 	}
 	
 	@Test
