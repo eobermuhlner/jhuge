@@ -72,7 +72,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	
 	@Override
 	public boolean contains(Object element) {
-		int hashCode = element == null ? 0 : element.hashCode();
+		int hashCode = hashCode(element);
 		long[] addresses = hashCodeMap.get(hashCode);
 		
 		if (addresses == null) {
@@ -88,7 +88,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Adds an element.
 	 * 
@@ -100,7 +100,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	 * @return <code>true</code> if the element was added, <code>false</code> otherwise 
 	 */
 	protected boolean addInternal(E element) {
-		int hashCode = element == null ? 0 : element.hashCode();
+		int hashCode = hashCode(element);
 		long[] addresses = hashCodeMap.get(hashCode);
 		
 		if (addresses == null) {
@@ -136,7 +136,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 	 * @return <code>true</code> if the element was removed, <code>false</code> otherwise
 	 */
 	protected boolean removeInternal(Object element) {
-		int hashCode = element == null ? 0 : element.hashCode();
+		int hashCode = hashCode(element);
 		long[] addresses = hashCodeMap.get(hashCode);
 		
 		if (addresses == null) {
@@ -201,6 +201,12 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		return result;
 	}
 
+	private static int hashCode(Object object) {
+		int h = object == null ? 0 : object.hashCode();
+		h ^= (h >>> 20) ^ (h >>> 12);
+		return h ^ (h >>> 7) ^ (h >>> 4);
+	}
+	
 	private long writeElement(E element) {
 		byte[] data = serializeElement(element);
 		long address = memoryManager.allocate(data);

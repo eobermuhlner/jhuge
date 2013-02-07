@@ -85,7 +85,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	
 	@Override
 	public V get(Object key) {
-		int hashCode = key == null ? 0 : key.hashCode();
+		int hashCode = hashCode(key);
 		
 		long[] keyValueAddresses = hashCodeMap.get(hashCode);
 		if (keyValueAddresses == null) {
@@ -104,7 +104,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	
 	@Override
 	public boolean containsKey(Object key) {
-		int hashCode = key == null ? 0 : key.hashCode();
+		int hashCode = hashCode(key);
 		
 		long[] keyValueAddresses = hashCodeMap.get(hashCode);
 		if (keyValueAddresses == null) {
@@ -123,7 +123,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{size=" + size() + "}";
+		return getClass().getSimpleName() + "{size=" + size() + ", table=" + hashCodeMap + "}";
 	}
 	
 	private K getKey(long address) {
@@ -155,7 +155,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 	 * @return the old value, or <code>null</code> if none
 	 */
 	protected V putInternal(K key, V value) {
-		int hashCode = key == null ? 0 : key.hashCode();
+		int hashCode = hashCode(key);
 		byte[] keyData = serializeKey(key);
 		byte[] valueData = serializeValue(value);
 		
@@ -212,6 +212,12 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		hashCodeMap.clear();
 	}
 	
+	private static int hashCode(Object object) {
+		int h = object == null ? 0 : object.hashCode();
+		h ^= (h >>> 20) ^ (h >>> 12);
+		return h ^ (h >>> 7) ^ (h >>> 4);
+	}
+
 	private static long[] append(long[] keyValueAddresses, long keyAddress, long valueAddress) {
 		long[] result = new long[keyValueAddresses.length + 2];
 		System.arraycopy(keyValueAddresses, 0, result, 0, keyValueAddresses.length);
