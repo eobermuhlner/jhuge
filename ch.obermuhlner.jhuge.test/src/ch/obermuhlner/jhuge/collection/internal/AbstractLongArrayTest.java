@@ -91,6 +91,20 @@ public abstract class AbstractLongArrayTest {
 	}
 	
 	@Test
+	public void testIndexOf() {
+		LongArray array = createLongArray();
+
+		array.add(1000);
+		array.add(1001);
+		array.add(1002);
+
+		assertEquals(0, array.indexOf(1000));
+		assertEquals(1, array.indexOf(1001));
+		assertEquals(2, array.indexOf(1002));
+		assertEquals(-1, array.indexOf(-99));
+	}
+	
+	@Test
 	public void testClear() {
 		LongArray array = createLongArray();
 
