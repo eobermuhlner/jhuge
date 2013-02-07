@@ -1,5 +1,9 @@
 package ch.obermuhlner.jhuge.memory;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Random;
+
 import org.junit.Test;
 
 /**
@@ -32,10 +36,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		System.out.println("alloc  30 " + memoryManager.getFreeBlockSizes());
 		
 		memoryManager.compact();
-		System.out.println("compact  " + memoryManager.getFreeBlockSizes());
-		
-		memoryManager.compact();
-		System.out.println("compact  " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
 		
 		memoryManager.free(address1);
 		memoryManager.free(address2);
@@ -44,10 +45,10 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		System.out.println("free  all " + memoryManager.getFreeBlockSizes());
 		
 		memoryManager.compact();
-		System.out.println("compact  " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
 		
 		memoryManager.reset();
-		System.out.println("reset    " + memoryManager.getFreeBlockSizes());
+		System.out.println("reset     " + memoryManager.getFreeBlockSizes());
 		System.out.println();
 		
 		// --------------------------
@@ -65,21 +66,51 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		System.out.println("free   10 " + memoryManager.getFreeBlockSizes());
 
 		memoryManager.compact();
-		System.out.println("compact  " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
 
 		memoryManager.free(address5);
 		memoryManager.free(address7);
 		System.out.println("free  all " + memoryManager.getFreeBlockSizes());
 
 		memoryManager.compact();
-		System.out.println("compact  " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
 
 		memoryManager.reset();
-		System.out.println("reset    " + memoryManager.getFreeBlockSizes());
+		System.out.println("reset     " + memoryManager.getFreeBlockSizes());
 		System.out.println();
 		
 		// --------------------------
 
 	}
 
+	@Test
+	public void testFragmentation() {
+		Random random = new Random(1234);
+		MemoryMappedFileManager memoryManager = new MemoryMappedFileManager(200);
+
+		final int count = 10000;
+
+		Deque<Long> blocks = new ArrayDeque<Long>();
+		for (int i = 0; i < count; i++) {
+			String desc = "step #" + i;
+			int r = random.nextInt(100);
+			
+			if (r < 60) {
+				int length = random.nextInt(50);
+				System.out.println(desc + " allocate " + length + " bytes");
+				long address = memoryManager.allocate(length);
+				blocks.add(address);
+			
+			} else if (r < 100) {
+				if (!blocks.isEmpty()) {
+					long address = blocks.removeFirst();
+					System.out.println(desc + " free " + memoryManager.read(address).length + " bytes");
+					memoryManager.free(address);
+				}
+			}
+			
+			System.out.println("Alloc: " + blocks.size());
+			System.out.println("Free : " + memoryManager.getFreeBlockSizes());
+		}
+	}
 }

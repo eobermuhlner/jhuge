@@ -1,20 +1,15 @@
 package ch.obermuhlner.jhuge.memory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 
-import ch.obermuhlner.jhuge.collection.internal.LongIntMap;
+import ch.obermuhlner.jhuge.collection.internal.JavaLongArray;
+import ch.obermuhlner.jhuge.collection.internal.LongArray;
 
 /**
  * Uses {@link ByteBuffer#allocateDirect(int) direct mapped buffers} to store the managed memory blocks outside of the Java heap.
- * 
- * <p>If </p>
  */
 public class MemoryMappedFileManager extends AbstractMemoryManager {
 
@@ -41,15 +36,18 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	
 	private static final boolean DEBUG_MODE = true;
 	
-	private static byte[] EMPTY_BLOCK_DATA = new byte[4]; // size is set to 0
+	private static byte[] EMPTY_BLOCK_DATA = new byte[4]; // size is initialized to 0
 	
 	private final List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
 	private final int bufferSize;
 	private final int blockSize;
+	private final int allowedBlockOversize;
+	private final boolean compactAfterFree;
 	
-	private final LongIntMap freeBlocks = new LongIntMap();
+	private final LongArray freeBlocks = new JavaLongArray();
 	
 	private long emptyBlockAddress = -1;
+
 
 	/**
 	 * Constructs a {@link MemoryMappedFileManager} with a default buffer size of 100 megabytes and no block quantification.
@@ -74,8 +72,22 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * @param blockSize the block size, or {@link #NO_BLOCK_SIZE} to use no block quantification
 	 */
 	public MemoryMappedFileManager(int bufferSize, int blockSize) {
+		this(bufferSize, blockSize, 32, false);
+	}
+
+	/**
+	 * Constructs a {@link MemoryMappedFileManager} with the specified configuration.
+	 * 
+	 * @param bufferSize the buffer size 
+	 * @param blockSize the block size, or {@link #NO_BLOCK_SIZE} to use no block quantification
+	 * @param allowedBlockOversize the allowed block oversize when searching for a fitting free block
+	 * @param compactAfterFree compact after freeing a block
+	 */
+	public MemoryMappedFileManager(int bufferSize, int blockSize, int allowedBlockOversize, boolean compactAfterFree) {
 		this.bufferSize = bufferSize;
 		this.blockSize = blockSize;
+		this.allowedBlockOversize = allowedBlockOversize;
+		this.compactAfterFree = compactAfterFree;
 	}
 	
 	/**
@@ -169,11 +181,15 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		if (address == emptyBlockAddress) {
 			return;
 		}
-
+		
 		int length = getLength(address);
 		checkBlockLength(address, length);
 		
-		freeBlocks.put(address, length);
+		freeBlocks.add(address);
+		
+		if (compactAfterFree) {
+			compact();
+		}
 	}
 	
 	/**
@@ -182,36 +198,43 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * <p>This might lead to larger free memory blocks.</p>
 	 */
 	public void compact() {
-		List<Long> addresses = new ArrayList<Long>(freeBlocks.keySet());
+		int n = freeBlocks.size();
+		// TODO sort freeBlocks as soon as LongArray.sort() is available
+		List<Long> addresses = new ArrayList<Long>(n);
+		for (int i = 0; i < n; i++) {
+			addresses.add(freeBlocks.get(i));
+		}
+		
 		Collections.sort(addresses);
-		System.out.println("sorted addresses: " + addresses);
+		//System.out.println("sorted addresses: " + addresses);
 		for (int i = addresses.size()-1; i > 0; i--) {
 			long leftAddress = addresses.get(i - 1);
 			long rightAddress = addresses.get(i);
-			int leftLength = freeBlocks.get(leftAddress);
-			int rightLength = freeBlocks.get(rightAddress);
-			System.out.println("adjacent?: left=" + leftAddress + "," + leftLength + " right=" + rightAddress + "," + rightLength);
 			
 			if (isSameBuffer(leftAddress, rightAddress)) {
+				int leftLength = getLengthOfFreeBlock(leftAddress);
+				int rightLength = getLengthOfFreeBlock(rightAddress);
+				//System.out.println("adjacent?: left=" + leftAddress + "," + leftLength + " right=" + rightAddress + "," + rightLength);
+
 				long calulatedAddressAfterLeft = leftAddress + 4 + leftLength;
 				if (calulatedAddressAfterLeft == rightAddress) {
-					int combinedLength = 4 + leftLength + rightLength;
+					int combinedLength = leftLength + 4 + rightLength;
 					setLength(leftAddress, combinedLength);
-					System.out.println(" combined: left=" + leftAddress + "," + combinedLength);
-					freeBlocks.remove(rightAddress);
-					System.out.println(" dropped: right=" + rightAddress + "," + rightLength);
+					//System.out.println(" combined: left=" + leftAddress + "," + combinedLength);
+					freeBlocks.remove(freeBlocks.indexOf(leftAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
+					//System.out.println(" dropped: right=" + rightAddress + "," + rightLength);
 				} else {
-					if (DEBUG_MODE && calulatedAddressAfterLeft > rightAddress) {
+					if (calulatedAddressAfterLeft > rightAddress) {
 						throw new IllegalStateException("left " + leftAddress + "," + leftLength + " overlaps " + rightAddress + "," + rightLength);
 					}
-					System.out.println("  not adjacent! " + calulatedAddressAfterLeft + " != " + rightAddress + " (" + (rightAddress - calulatedAddressAfterLeft) + " missing)");
+					//System.out.println("  not adjacent! " + calulatedAddressAfterLeft + " != " + rightAddress + " (" + (rightAddress - calulatedAddressAfterLeft) + " missing)");
 				}
 			} else {
-				System.out.println("  not same buffer!");
+				//System.out.println("  not same buffer!");
 			}
 		}
 	}
-	
+
 	@Override
 	public void reset() {
 		freeBlocks.clear();
@@ -234,27 +257,27 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	* @param toBeDestroyed
 	*          The DirectByteBuffer that will be "cleaned". Utilizes reflection.
 	*/
-	@SuppressWarnings("unused")
-	private static void destroyDirectByteBuffer(ByteBuffer toBeDestroyed) {
-		try {
-			Method cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
-			cleanerMethod.setAccessible(true);
-			Object cleaner = cleanerMethod.invoke(toBeDestroyed);
-			Method cleanMethod = cleaner.getClass().getMethod("clean");
-			cleanMethod.setAccessible(true);
-			cleanMethod.invoke(cleaner);
-		} catch(InvocationTargetException exception) {
-			throw new IllegalStateException("Failed to destroy direct buffer", exception);
-		} catch (NoSuchMethodException exception) {
-			throw new IllegalStateException("Failed to destroy direct buffer", exception);
-		} catch (SecurityException exception) {
-			throw new IllegalStateException("Failed to destroy direct buffer", exception);
-		} catch (IllegalAccessException exception) {
-			throw new IllegalStateException("Failed to destroy direct buffer", exception);
-		} catch (IllegalArgumentException exception) {
-			throw new IllegalStateException("Failed to destroy direct buffer", exception);
-		}
-	}
+//	@SuppressWarnings("unused")
+//	private static void destroyDirectByteBuffer(ByteBuffer toBeDestroyed) {
+//		try {
+//			Method cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
+//			cleanerMethod.setAccessible(true);
+//			Object cleaner = cleanerMethod.invoke(toBeDestroyed);
+//			Method cleanMethod = cleaner.getClass().getMethod("clean");
+//			cleanMethod.setAccessible(true);
+//			cleanMethod.invoke(cleaner);
+//		} catch(InvocationTargetException exception) {
+//			throw new IllegalStateException("Failed to destroy direct buffer", exception);
+//		} catch (NoSuchMethodException exception) {
+//			throw new IllegalStateException("Failed to destroy direct buffer", exception);
+//		} catch (SecurityException exception) {
+//			throw new IllegalStateException("Failed to destroy direct buffer", exception);
+//		} catch (IllegalAccessException exception) {
+//			throw new IllegalStateException("Failed to destroy direct buffer", exception);
+//		} catch (IllegalArgumentException exception) {
+//			throw new IllegalStateException("Failed to destroy direct buffer", exception);
+//		}
+//	}
 
 	private void checkBlockLength(long address, int length) {
 		if (DEBUG_MODE) {
@@ -276,7 +299,11 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * @return a snapshot of the sizes of the the free memory blocks
 	 */
 	public List<Integer> getFreeBlockSizes() {
-		ArrayList<Integer> snapshot = new ArrayList<Integer>(freeBlocks.values());
+		int n = freeBlocks.size();
+		ArrayList<Integer> snapshot = new ArrayList<Integer>(n);
+		for (int i = 0; i < freeBlocks.size(); i++) {
+			snapshot.add(getLengthOfFreeBlock(freeBlocks.get(i)));
+		}
 		Collections.sort(snapshot);
 		return snapshot;
 	}
@@ -284,6 +311,10 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "{buffers=" + buffers.size() + ", bufferSize=" + bufferSize + ", freeblocks=" + freeBlocks.size() + "}";
+	}
+	
+	private int getLengthOfFreeBlock(long address) {
+		return getLength(address);
 	}
 	
 	private int getLength(long address) {
@@ -328,11 +359,10 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 		long freeBlock = findFreeBlock2(length);
 
-		// TODO use compact() as soon as it is well tested
-//		if (freeBlock < 0) {
-//			compact();
-//			freeBlock = findFreeBlock2(length);
-//		}
+		if (freeBlock < 0) {
+			compact();
+			freeBlock = findFreeBlock2(length);
+		}
 		
 		if (freeBlock < 0) {
 			addMemoryMappedFile();
@@ -343,28 +373,35 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	}
 
 	private long findFreeBlock2(int length) {
+		int bestBlockIndex = -1;
 		long bestBlockAddress = -1;
 		int bestBlockLength = -1;
-		Set<Entry<Long, Integer>> entrySet = freeBlocks.entrySet();
-		for (Entry<Long, Integer> entry : entrySet) {
-			long blockAddress = entry.getKey();
-			int blockLength = entry.getValue();
+		final int n = freeBlocks.size();
+		for (int i = 0; i < n; i++) {
+			long blockAddress = freeBlocks.get(i);
+			int blockLength = getLengthOfFreeBlock(blockAddress);
 			if (blockLength >= length) {
-				bestBlockAddress = blockAddress;
-				bestBlockLength = blockLength;
-				if (blockLength == length) {
+				if (blockLength - length <= allowedBlockOversize) {
+					bestBlockIndex = i;
+					bestBlockAddress = blockAddress;
+					bestBlockLength = blockLength;
 					break;
+				}
+				if (blockLength > bestBlockLength) {
+					bestBlockIndex = i;
+					bestBlockAddress = blockAddress;
+					bestBlockLength = blockLength;
 				}
 			}
 		}
 
-		if (bestBlockAddress < 0) {
+		if (bestBlockIndex < 0) {
 			return -1;
 		}
 		
-		freeBlocks.remove(bestBlockAddress);
+		freeBlocks.remove(bestBlockIndex);
 
-		if (bestBlockLength > length + 4) {
+		if (bestBlockLength > length + Math.max(4, allowedBlockOversize)) {
 			long remainingBlockAddress = bestBlockAddress + length + 4;
 			int remainingBlockLength = bestBlockLength - length - 4;
 			setLength(remainingBlockAddress, remainingBlockLength);
@@ -395,6 +432,6 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 	private void addFreeBlock(long address, int length) {
 		checkBlockLength(address, length);
-		freeBlocks.put(address, length);
+		freeBlocks.add(address);
 	}
 }
