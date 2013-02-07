@@ -15,6 +15,8 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
 public class HugeIntLongArrayMap implements IntLongArrayMap {
 
 	private static final long NO_ADDRESS = -1;
+
+	private static final boolean DEBUG = false;
 	
 	private final MemoryManager memoryManager;
 
@@ -50,6 +52,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	@Override
 	public void put(int key, long[] value) {
 		growIfNecessary();
+		
 		int index = hashIndex(key);
 
 		long address = addresses.get(index);
@@ -140,7 +143,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		}
 		
 		byte[] data = memoryManager.read(address);
-		printData("BEFORE remove " + key, data);
+		if (DEBUG) printData("BEFORE remove " + key, data);
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 		
 		int count = byteBuffer.getInt();
@@ -211,13 +214,13 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		
 		size++;
 		byte[] data = byteStream.toByteArray();
-		printData("setValueInNew " + key + Arrays.toString(value), data);
+		if (DEBUG) printData("setValueInNew " + key + Arrays.toString(value), data);
 		return memoryManager.allocate(data);
 	}
 	
 	private long setEntryInOld(long address, int key, long[] value) {
 		byte[] data = memoryManager.read(address);
-		printData("BEFORE setEntryInOld " + key, data);
+		if (DEBUG) printData("BEFORE setEntryInOld " + key, data);
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
 		boolean found = findKey(byteBuffer, key);
@@ -235,7 +238,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 //					for (int j = 0; j < storedArrayLength; j++) {
 //						byteBuffer.putLong(value[j]);
 //					}
-//					printData("setEntryInOld " + key + Arrays.toString(value), data);
+//					if (DEBUG) printData("setEntryInOld " + key + Arrays.toString(value), data);
 //					memoryManager.write(address, data);
 //					return address;
 //				}
@@ -294,7 +297,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		}
 
 		byte[] data = byteStream.toByteArray();
-		printData("setEntryInCopy " + key + Arrays.toString(value), data);
+		if (DEBUG) printData("setEntryInCopy " + key + Arrays.toString(value), data);
 		return memoryManager.allocate(data);
 	}
 
@@ -340,7 +343,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 		}
 		
 		byte[] data = byteStream.toByteArray();
-		printData("removeEntryInCopy " + key, data);
+		if (DEBUG) printData("removeEntryInCopy " + key, data);
 		return memoryManager.allocate(data);
 	}
 
@@ -390,16 +393,20 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	
 	private void growIfNecessary() {
 		int thresholdSize = (int)(addresses.size() * loadFactor);
-		if (countHashCodes < thresholdSize) {
+		if (countHashCodes <= thresholdSize) {
 			return;
 		}
-		
+
+		System.out.println("Growing " + " size=" + size + " addresses=" + addresses.size() + " used=" + countHashCodes);
 		grow();
 	}
 
 	private void grow() {
 		HugeLongArray oldAddresses = addresses;
-		initialize(oldAddresses.size() * 2);
+		
+		// instead of just doubling the size - this gives more prime number sizes which tend to distribute hash codes better
+		int newCapacity = oldAddresses.size() <= 1 ? 2 : oldAddresses.size() * 2 - 1;
+		initialize(newCapacity);
 		
 		for (int oldAddressIndex = 0; oldAddressIndex < oldAddresses.size(); oldAddressIndex++) {
 			long address = oldAddresses.get(oldAddressIndex);
@@ -433,6 +440,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 							storedArray[j] = byteBuffer.getLong();
 						}
 						put(storedKey, storedArray);
+						size--; // correct the size that was modified by put() 
 					}		
 				}
 			}
@@ -441,7 +449,7 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{size=" + size + ", tableSize=" + addresses.size() + ", tableUsed=" + countHashCodes + "}";
+		return getClass().getSimpleName() + "{size=" + size() + ", tableSize=" + addresses.size() + ", tableUsed=" + countHashCodes + "}";
 	}
 	
 	private class MyIntIterator implements IntIterator {
@@ -507,6 +515,10 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 			
 			if (currentAddressIndex == nextAddressIndex) {
 				nextEntriesCount--;
+				nextEntriesIndex--;
+				if (nextEntriesCount == 0) {
+					toNext();
+				}
 			}
 		}
 		
