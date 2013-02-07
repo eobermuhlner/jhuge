@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -247,8 +248,8 @@ public abstract class AbstractIntLongArrayMapTest {
 		assertEquals(false, map.containsKey(key));
 		assertEquals(0, map.size());
 		
-		assertEquals(true, expectedKeys.isEmpty());
 		assertEquals(false, keySet.hasNext());
+		assertEquals(true, expectedKeys.isEmpty());
 		
 		try {
 			keySet.next();
@@ -290,6 +291,36 @@ public abstract class AbstractIntLongArrayMapTest {
 			int key = i;
 			assertEquals(false, map.containsKey(key));
 			assertEquals(null, map.get(key));
+		}
+	}
+	
+	
+	@Test
+	public void testRandom() {
+		Random random = new Random(1);
+
+		IntLongArrayMap map = createIntLongArrayMap();
+
+		final long[][] values = {
+				ARRAY_0, ARRAY_1, ARRAY_2, ARRAY_3
+		};
+
+		final int n = 10000;
+		for (int i = 0; i < n; i++) {
+			String desc = "step=" + i;
+
+			int randomKey = random.nextInt(i / 10 + 1);
+			long[] randomValue = values[random.nextInt(values.length)]; 
+			
+			int operation = random.nextInt(100);
+			if (operation <= 60) {
+				System.out.println(desc + " put " + randomKey + " " + randomValue);
+				map.put(randomKey, randomValue);
+				
+			} else if (operation <= 100) {
+				System.out.println(desc + " remove " + randomKey);
+				map.remove(randomKey);
+			}
 		}
 	}
 }
