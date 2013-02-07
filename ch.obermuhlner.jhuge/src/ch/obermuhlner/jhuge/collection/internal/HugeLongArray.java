@@ -7,7 +7,7 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
 /**
  * A {@link LongArray} implementation that stores the values in a {@link MemoryManager}.
  */
-public class HugeLongArray implements LongArray {
+public class HugeLongArray extends AbstractLongArray {
 
 	private static final int ELEMENT_SIZE = 8;
 	

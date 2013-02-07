@@ -3,7 +3,7 @@ package ch.obermuhlner.jhuge.collection.internal;
 /**
  * A {@link LongArray} implementation that stores the values in a <code>long[]</code>.
  */
-public class JavaLongArray implements LongArray {
+public class JavaLongArray extends AbstractLongArray {
 
 	private long[] array;
 
@@ -83,7 +83,19 @@ public class JavaLongArray implements LongArray {
 	public int size() {
 		return size;
 	}
-	
+
+	@Override
+	public int indexOf(long element) {
+		final int n = size();
+		for (int i = 0; i < n; i++) {
+			if (element == array[i]) {
+				return i;
+			}
+		}
+		
+		return -1;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder result = new StringBuilder();
