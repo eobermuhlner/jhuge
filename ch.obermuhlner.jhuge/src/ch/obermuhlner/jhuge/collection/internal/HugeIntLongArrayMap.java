@@ -397,7 +397,6 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 			return;
 		}
 
-		System.out.println("Growing " + " size=" + size + " addresses=" + addresses.size() + " used=" + countHashCodes);
 		grow();
 	}
 
