@@ -21,6 +21,10 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * This is done by a {@link Converter} which can be specified in the {@link Builder}.
  * The default {@link Converter} can handle instances of all serializable classes.</p>
  * 
+ * <p>Important:
+ * Changes to the elements outside of the huge collection are <strong>not</strong> automatically reflected by the serialized form in the collection.
+ * In this case you must replace the stored element with the modified element.</p>
+ * 
  * <h2>Heap Consumption</h2>
  * 
  * <h3>Heap in normal mode</h3>
@@ -30,23 +34,18 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  * 
  * <p>The following table shows the heap consumption in normal mode when filled with 10000 strings:</p>
 <pre>
-Class Name                                            |   Objects | Shallow Heap
----------------------------------------------------------------------------------
-                                                      |           |             
-java.util.HashMap$Entry                               |         7 |          168
-java.lang.Long                                        |         6 |           96
-java.util.HashMap$Entry[]                             |         1 |           80
-java.lang.Object[]                                    |         1 |           56
-ch.obermuhlner.jhuge.collection.internal.LongIntMap   |         1 |           40
-java.lang.Integer                                     |         2 |           32
-ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |         1 |           32
-java.util.ArrayList                                   |         1 |           24
-ch.obermuhlner.jhuge.collection.internal.HugeLongArray|         1 |           24
-ch.obermuhlner.jhuge.collection.HugeArrayList         |         1 |           24
-ch.obermuhlner.jhuge.converter.CompactConverter       |         1 |           16
-java.util.HashMap$EntrySet                            |         1 |           16
-Total: 12 entries                                     |        24 |          608
----------------------------------------------------------------------------------
+Class Name                                            | Objects | Shallow Heap
+-------------------------------------------------------------------------------
+long[]                                                |       1 |          144
+java.lang.Object[]                                    |       1 |           56
+ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |       1 |           40
+ch.obermuhlner.jhuge.collection.HugeArrayList         |       1 |           24
+java.util.ArrayList                                   |       1 |           24
+ch.obermuhlner.jhuge.collection.internal.HugeLongArray|       1 |           24
+ch.obermuhlner.jhuge.converter.CompactConverter       |       1 |           16
+ch.obermuhlner.jhuge.collection.internal.JavaLongArray|       1 |           16
+Total: 8 entries                                      |       8 |          344
+-------------------------------------------------------------------------------
 </pre>
  * 
  * <h3>Heap in faster mode</h3>
@@ -57,25 +56,37 @@ Total: 12 entries                                     |        24 |          608
  * 
  * <p>The following table shows the heap consumption in faster mode when filled with 10000 strings:</p>
 <pre>
-Class Name                                            |   Objects | Shallow Heap
----------------------------------------------------------------------------------
-                                                      |           |             
-long[]                                                |         1 |      131,088
-java.util.HashMap$Entry[]                             |         1 |           80
-java.lang.Object[]                                    |         1 |           56
-ch.obermuhlner.jhuge.collection.internal.LongIntMap   |         1 |           40
-ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |         1 |           32
-java.util.ArrayList                                   |         1 |           24
-java.util.HashMap$Entry                               |         1 |           24
-ch.obermuhlner.jhuge.collection.HugeArrayList         |         1 |           24
-java.lang.Integer                                     |         1 |           16
-java.lang.Long                                        |         1 |           16
-ch.obermuhlner.jhuge.converter.CompactConverter       |         1 |           16
-ch.obermuhlner.jhuge.collection.internal.JavaLongArray|         1 |           16
-java.util.HashMap$EntrySet                            |         1 |           16
-Total: 13 entries                                     |        13 |      131,448
----------------------------------------------------------------------------------
+Class Name                                            | Objects | Shallow Heap
+-------------------------------------------------------------------------------
+long[]                                                |       2 |      131,168
+java.lang.Object[]                                    |       1 |           56
+ch.obermuhlner.jhuge.memory.MemoryMappedFileManager   |       1 |           40
+ch.obermuhlner.jhuge.collection.internal.JavaLongArray|       2 |           32
+ch.obermuhlner.jhuge.collection.HugeArrayList         |       1 |           24
+java.util.ArrayList                                   |       1 |           24
+ch.obermuhlner.jhuge.converter.CompactConverter       |       1 |           16
+Total: 7 entries                                      |       9 |      131,360
+-------------------------------------------------------------------------------
 </pre>
+ * 
+ * <p>The {@link HugeArrayList} in faster mode uses about 8-16 bytes per entry, independent of the size of the elements.</p>
+ * 
+ * <h3>Heap comparison with ArrayList</h3>
+ * 
+ * <p>As a comparison the following table shows the heap consumption of a <code>java.util.ArrayList</code> filled with 10000 strings:</p>
+<pre>
+Class Name         | Objects | Shallow Heap
+--------------------------------------------
+java.lang.String   |  10,000 |      240,000
+char[]             |  10,000 |      239,920
+java.lang.Object[] |       1 |       46,496
+java.util.ArrayList|       1 |           24
+Total: 4 entries   |  20,002 |      526,440
+--------------------------------------------
+</pre>
+ * 
+ * <p>The collections where filled with relatively small Strings. A real world example would probably store larger objects and use therefore more Java heap.</p>
+ * <p>Elements: <code>"X" + value</code></p>
  * 
  * <h2>Performance</h2>
  * 
