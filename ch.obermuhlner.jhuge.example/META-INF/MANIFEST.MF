@@ -4,4 +4,5 @@ Bundle-Name: JHuge Examples
 Bundle-SymbolicName: ch.obermuhlner.jhuge.example
 Bundle-Version: 0.1.0
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: ch.obermuhlner.jhuge.collection
+Import-Package: ch.obermuhlner.jhuge.collection,
+ ch.obermuhlner.jhuge.memory
