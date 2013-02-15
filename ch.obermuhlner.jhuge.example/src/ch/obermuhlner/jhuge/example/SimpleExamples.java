@@ -1,5 +1,7 @@
 package ch.obermuhlner.jhuge.example;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,6 +30,7 @@ public class SimpleExamples {
 		exampleConfiguredHugeArrayList();
 		exampleImmutableHugeHashSet();
 		exampleHugeHashMap();
+		exampleHugeHashMap_Collection();
 	}
 
 	private static void exampleHugeArrayList() {
@@ -111,6 +114,19 @@ public class SimpleExamples {
 				System.out.print(" ");
 			}
 		}
+	}
+
+	private static void exampleHugeHashMap_Collection() {
+		Map<String, Collection<String>> map = new HugeHashMap.Builder<String, Collection<String>>().build();
+
+		List<String> studentsList = new ArrayList<String>();
+		map.put("students", studentsList);
+		
+		studentsList.add("Jim");
+		System.out.println(map.get("students"));
+		
+		map.put("students", studentsList);
+		System.out.println(map.get("students"));
 	}
 
 	private static String createSomeExampleString(int i) {
