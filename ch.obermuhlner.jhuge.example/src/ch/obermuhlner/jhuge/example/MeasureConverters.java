@@ -66,17 +66,31 @@ public class MeasureConverters {
 		measureSerialize(converter, new Date());
 		measureSerialize(converter, new EmptySerializable());
 		
+		measureSerialize(converter, new byte[] { });
 		measureSerialize(converter, new byte[] { (byte)1, (byte)2, (byte)3 });
+		measureSerialize(converter, new short[] { });
 		measureSerialize(converter, new short[] { (short)1, (short)2, (short)3 });
+		measureSerialize(converter, new int[] { });
 		measureSerialize(converter, new int[] { 1, 2, 3 });
+		measureSerialize(converter, new long[] { });
 		measureSerialize(converter, new long[] { 1L, 2L, 3L });
+		measureSerialize(converter, new float[] { });
 		measureSerialize(converter, new float[] { 1.1f, 2.2f, 3.3f });
+		measureSerialize(converter, new double[] { });
 		measureSerialize(converter, new double[] { 1.1, 2.2, 3.3 });
+		measureSerialize(converter, new boolean[] { });
+		measureSerialize(converter, new boolean[] { true, false, true});
 		measureSerialize(converter, new boolean[] { true, false, true, false, true, true, false });
+		measureSerialize(converter, new boolean[] { true, false, true, false, true, true, false, true });
+		measureSerialize(converter, new char[] { });
 		measureSerialize(converter, new char[] { 'a', 'b', 'c' });
+		measureSerialize(converter, new String[] { });
 		measureSerialize(converter, new String[] { "a", "b", "c" });
+		measureSerialize(converter, new BigInteger[] { });
 		measureSerialize(converter, new BigInteger[] { new BigInteger("1"), new BigInteger("222"), new BigInteger("333") });
+		measureSerialize(converter, new BigDecimal[] { });
 		measureSerialize(converter, new BigDecimal[] { new BigDecimal("1.1"), new BigDecimal("2.2"), new BigDecimal("3.3") });
+		measureSerialize(converter, new Date[] { });
 		measureSerialize(converter, new Date[] { new Date(), new Date(), new Date() });
 	}
 

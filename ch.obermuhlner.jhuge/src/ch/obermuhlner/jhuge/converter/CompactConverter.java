@@ -40,6 +40,8 @@ public class CompactConverter<T extends Serializable> extends SerializableConver
 	private static final byte ARRAY_SHORT = -SHORT;
 	private static final byte ARRAY_INT = -INT;
 	private static final byte ARRAY_LONG = -LONG;
+	private static final byte ARRAY_FLOAT = -FLOAT;
+	private static final byte ARRAY_DOUBLE = -DOUBLE;
 	private static final byte ARRAY_CHAR = -CHAR;
 	private static final byte ARRAY_BOOLEAN = -BOOLEAN;
 	private static final byte ARRAY_BIGDECIMAL = -BIGDECIMAL;
@@ -244,6 +246,28 @@ public class CompactConverter<T extends Serializable> extends SerializableConver
 			byteBuffer.putInt(value.length);
 			for (int i = 0; i < value.length; i++) {
 				byteBuffer.putLong(value[i]);
+			}
+			return compactData;
+		}
+		if (clazz ==  float[].class) {
+			float[] value = (float[]) source;
+			byte[] compactData = new byte[1 + 4 + value.length * 4];
+			ByteBuffer byteBuffer = ByteBuffer.wrap(compactData);
+			byteBuffer.put(ARRAY_FLOAT);
+			byteBuffer.putInt(value.length);
+			for (int i = 0; i < value.length; i++) {
+				byteBuffer.putFloat(value[i]);
+			}
+			return compactData;
+		}
+		if (clazz ==  double[].class) {
+			double[] value = (double[]) source;
+			byte[] compactData = new byte[1 + 4 + value.length * 8];
+			ByteBuffer byteBuffer = ByteBuffer.wrap(compactData);
+			byteBuffer.put(ARRAY_DOUBLE);
+			byteBuffer.putInt(value.length);
+			for (int i = 0; i < value.length; i++) {
+				byteBuffer.putDouble(value[i]);
 			}
 			return compactData;
 		}
@@ -512,6 +536,30 @@ public class CompactConverter<T extends Serializable> extends SerializableConver
 			long[] array = new long[length];
 			for (int i = 0; i < length; i++) {
 				array[i] = byteBuffer.getLong();
+			}
+			@SuppressWarnings("unchecked")
+			T result = (T) array;
+			return result;
+		}
+		case ARRAY_FLOAT: {
+			ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+			byteBuffer.get(); // type
+			int length = byteBuffer.getInt();
+			float[] array = new float[length];
+			for (int i = 0; i < length; i++) {
+				array[i] = byteBuffer.getFloat();
+			}
+			@SuppressWarnings("unchecked")
+			T result = (T) array;
+			return result;
+		}
+		case ARRAY_DOUBLE: {
+			ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+			byteBuffer.get(); // type
+			int length = byteBuffer.getInt();
+			double[] array = new double[length];
+			for (int i = 0; i < length; i++) {
+				array[i] = byteBuffer.getDouble();
 			}
 			@SuppressWarnings("unchecked")
 			T result = (T) array;
