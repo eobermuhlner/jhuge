@@ -7,7 +7,6 @@ import ch.obermuhlner.jhuge.collection.HugeArrayList;
 
 /**
  * Application to measure the CPU performance of several {@link Collection} and {@link Map} implementations.
- *
  */
 public class MeasureCpu {
 
@@ -17,10 +16,10 @@ public class MeasureCpu {
 	 * @param args the arguments
 	 */
 	public static void main(String[] args) {
-		testMeasureClear();
+		measureClear();
 	}
 
-	private static void testMeasureClear() {
+	private static void measureClear() {
 		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().build();
 		
 		for (int i = 0; i < 10000; i++) {
