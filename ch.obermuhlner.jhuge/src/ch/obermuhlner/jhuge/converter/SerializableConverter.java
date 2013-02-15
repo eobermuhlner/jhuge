@@ -47,6 +47,15 @@ public class SerializableConverter<T extends Serializable> implements Converter<
 	}
 	
 	/**
+	 * Returns the {@link ClassLoader}.
+	 * 
+	 * @return the {@link ClassLoader} or <code>null</code> if none
+	 */
+	protected ClassLoader getClassLoader() {
+		return classLoader;
+	}
+	
+	/**
 	 * Deserializes an {@link InputStream} using the specified {@link ClassLoader}.
 	 * 
 	 * @param inputStream the {@link InputStream} to deserialize
@@ -68,16 +77,6 @@ public class SerializableConverter<T extends Serializable> implements Converter<
 		catch (IOException exception) {
 			throw new IllegalArgumentException(exception);
 		}
-		finally {
-			try {
-				if (in != null) {
-					in.close();
-				}
-			}
-			catch (IOException exception) {
-				throw new IllegalArgumentException(exception);
-			}
-		}
 	}
 
 	/**
@@ -93,14 +92,6 @@ public class SerializableConverter<T extends Serializable> implements Converter<
 
 		} catch (IOException exception) {
 			throw new IllegalArgumentException(exception);
-		} finally {
-			try {
-				if (out != null) {
-					out.close();
-				}
-			} catch (IOException exception) {
-				throw new IllegalArgumentException(exception);
-			}
 		}
 	}
 }

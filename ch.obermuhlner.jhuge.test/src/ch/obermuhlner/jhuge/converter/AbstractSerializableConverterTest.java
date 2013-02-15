@@ -5,11 +5,13 @@ import static org.junit.Assert.assertEquals;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.junit.Test;
-
-import ch.obermuhlner.jhuge.converter.Converter;
 
 /**
  * Abstract base class to test {@link Converter}s that accept any {@link Serializable} object.
@@ -112,6 +114,17 @@ public abstract class AbstractSerializableConverterTest {
 		assertConvert(converter, "");
 		assertConvert(converter, "example");
 	}
+
+	@Test
+	public void testConvert_BigInteger() {
+		Converter<Serializable> converter = createConverter();
+		assertConvert(converter, BigInteger.ZERO);
+		assertConvert(converter, BigInteger.ONE);
+		assertConvert(converter, BigInteger.TEN);
+		assertConvert(converter, new BigInteger("1234"));
+		assertConvert(converter, new BigInteger("ffff", 16));
+		assertConvert(converter, new SubBigInteger("12345678"));
+	}
 	
 	@Test
 	public void testConvert_BigDecimal() {
@@ -123,6 +136,18 @@ public abstract class AbstractSerializableConverterTest {
 		assertConvert(converter, new BigDecimal("1234.5678", MathContext.DECIMAL32));
 		assertConvert(converter, new BigDecimal("1234.5678", MathContext.DECIMAL64));
 		assertConvert(converter, new BigDecimal("1234.5678", MathContext.DECIMAL128));
+		assertConvert(converter, new BigDecimal("1234.5678").setScale(8, RoundingMode.HALF_EVEN));
+		assertConvert(converter, new SubBigDecimal("4.4"));
+	}
+
+	@Test
+	public void testConvert_Date() {
+		Converter<Serializable> converter = createConverter();
+		assertConvert(converter, new Date());
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(67, 2, 24);
+		assertConvert(converter, calendar.getTime());
 	}
 
 	@Test
@@ -130,6 +155,9 @@ public abstract class AbstractSerializableConverterTest {
 		Converter<Serializable> converter = createConverter();
 		assertConvert(converter, new boolean[0]);
 		assertConvert(converter, new boolean[] { true, false } );
+		assertConvert(converter, new boolean[] { false, false, false, false, false, false, true } ); // 7 elements
+		assertConvert(converter, new boolean[] { false, false, false, false, false, false, false, true } ); // 8 elements
+		assertConvert(converter, new boolean[] { false, false, false, false, false, false, false, false, true } ); // 9 elements
 	}
 	
 	@Test
@@ -182,10 +210,54 @@ public abstract class AbstractSerializableConverterTest {
 	}
 	
 	@Test
+	public void testConvert_Array_BigDecimal() {
+		Converter<Serializable> converter = createConverter();
+		assertConvert(converter, new BigDecimal[0]);
+		assertConvert(converter, new BigDecimal[] { new BigDecimal("-3.3"), BigDecimal.ZERO, null, new SubBigDecimal("9.9"), new BigDecimal("3.3") } );
+	}
+	
+	@Test
 	public void testConvert_Array_String() {
 		Converter<Serializable> converter = createConverter();
 		assertConvert(converter, new String[0]);
 		assertConvert(converter, new String[] { "", "a", null, "XYZ"} );
+	}
+	
+	@Test
+	public void testConvert_Array_Date() {
+		Converter<Serializable> converter = createConverter();
+		assertConvert(converter, new Date[0]);
+		assertConvert(converter, new Date[] { new Date(), null } );
+	}
+	
+	private static class SubBigInteger extends BigInteger {
+		private static final long serialVersionUID = 1L;
+
+		public SubBigInteger(String value) {
+			super(value);
+		}
+		
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "{" + super.toString() + "}";
+		}
+	}
+	
+	private static class SubBigDecimal extends BigDecimal {
+		private static final long serialVersionUID = 1L;
+
+		public SubBigDecimal(String value, MathContext matchContext) {
+			super(value, matchContext);
+		}
+
+		public SubBigDecimal(String value) {
+			super(value);
+		}
+		
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "{" + super.toString() + "}";
+		}
 	}
 	
 	/**
@@ -223,6 +295,9 @@ public abstract class AbstractSerializableConverterTest {
 			Object expectedElement = Array.get(expected, i);
 			Object actualElement = Array.get(actual, i);
 			assertEquals(message + " array[" + i + "]", expectedElement, actualElement);
+			if (expectedElement != null && actualElement != null) {
+				assertEquals(message + " array[" + i + "]", expectedElement.getClass(), actualElement.getClass());
+			}
 		}
 	}
 }
