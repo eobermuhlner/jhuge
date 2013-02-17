@@ -221,6 +221,18 @@ public class HugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 			super.value(valueConverter);
 			return this;
 		}
+
+		@Override
+		public Builder<K, V> compressKey() {
+			super.compressKey();
+			return this;
+		}
+		
+		@Override
+		public AbstractHugeMapBuilder<K, V> compressValue() {
+			super.compressValue();
+			return this;
+		}
 		
 		@Override
 		public Builder<K, V> bufferSize(int bufferSize) {

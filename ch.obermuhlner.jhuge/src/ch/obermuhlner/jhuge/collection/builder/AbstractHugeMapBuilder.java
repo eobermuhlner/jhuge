@@ -4,6 +4,7 @@ import java.util.Map;
 
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.converter.Converters;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -29,6 +30,10 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 
 	private Converter<V> valueConverter;
 
+	private boolean compressKey;
+	
+	private boolean compressValue;
+	
 	private MemoryManager memoryManager;
 	
 	private boolean faster;
@@ -109,6 +114,30 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 	}
 	
 	/**
+	 * Specifies that the serialized keys should be stored in a compressed form.
+	 * 
+	 * @return this {@link CollectionBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> compressKey() {
+		checkPrepared();
+		this.compressKey = true;
+		return this;
+	}
+	
+	/**
+	 * Specifies that the serialized values should be stored in a compressed form.
+	 * 
+	 * @return this {@link CollectionBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeMapBuilder<K, V> compressValue() {
+		checkPrepared();
+		this.compressValue = true;
+		return this;
+	}
+	
+	/**
 	 * Specifies the buffer size used in the {@link MemoryMappedFileManager}.
 	 * 
 	 * @param bufferSize the buffer size
@@ -185,6 +214,18 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 			return;
 		}
 		
+		if (keyConverter == null) {
+			if (classLoader == null && keyClass != null) {
+				classLoader = keyClass.getClassLoader();
+			}
+			
+			keyConverter = Converters.bestConverter(keyClass, classLoader);
+		}
+
+		if (compressKey) {
+			keyConverter = new ZipCompressionConverter<K>(keyConverter);
+		}
+
 		if (valueConverter == null) {
 			if (classLoader == null && valueClass != null) {
 				classLoader = valueClass.getClassLoader();
@@ -192,13 +233,9 @@ public abstract class AbstractHugeMapBuilder<K, V> implements MapBuilder<K, V> {
 
 			valueConverter = Converters.bestConverter(valueClass, classLoader);
 		}
-
-		if (keyConverter == null) {
-			if (classLoader == null && keyClass != null) {
-				classLoader = keyClass.getClassLoader();
-			}
-			
-			keyConverter = Converters.bestConverter(keyClass, classLoader);
+		
+		if (compressValue) {
+			valueConverter = new ZipCompressionConverter<V>(valueConverter);
 		}
 
 		if (memoryManager == null) {

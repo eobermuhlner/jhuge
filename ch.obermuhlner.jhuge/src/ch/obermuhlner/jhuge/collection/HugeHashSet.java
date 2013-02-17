@@ -186,6 +186,12 @@ public class HugeHashSet<E> extends AbstractHugeHashSet<E> {
 		}
 		
 		@Override
+		public Builder<E> compressElement() {
+			super.compressElement();
+			return this;
+		}
+		
+		@Override
 		public Builder<E> bufferSize(int bufferSize) {
 			super.bufferSize(bufferSize);
 			return this;

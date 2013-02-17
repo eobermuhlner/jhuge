@@ -11,6 +11,7 @@ import org.junit.Test;
 import ch.obermuhlner.jhuge.collection.ImmutableHugeArrayList.Builder;
 import ch.obermuhlner.jhuge.converter.Converters;
 import ch.obermuhlner.jhuge.converter.IntegerConverter;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -74,6 +75,12 @@ public abstract class AbstractImmutableHugeArrayListTest extends AbstractListTes
 		assertEquals(true, (list.getElementConverter() instanceof IntegerConverter));
 	}
 
+	@Test
+	public void testBuilder_compressElement() {
+		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().compressElement().build();
+		assertEquals(true, (list.getElementConverter() instanceof ZipCompressionConverter));
+	}
+	
 	@Test
 	public void testBuilder_bufferSize() {
 		ImmutableHugeArrayList<Integer> list = new ImmutableHugeArrayList.Builder<Integer>().bufferSize(12345).build();

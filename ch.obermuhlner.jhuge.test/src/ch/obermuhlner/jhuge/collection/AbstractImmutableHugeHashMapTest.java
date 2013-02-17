@@ -12,6 +12,7 @@ import ch.obermuhlner.jhuge.collection.ImmutableHugeHashMap.Builder;
 import ch.obermuhlner.jhuge.converter.Converters;
 import ch.obermuhlner.jhuge.converter.IntegerConverter;
 import ch.obermuhlner.jhuge.converter.LongConverter;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -103,6 +104,18 @@ public abstract class AbstractImmutableHugeHashMapTest extends AbstractMapTest {
 		assertEquals(true, (map.getValueConverter() instanceof LongConverter));
 	}
 
+	@Test
+	public void testBuilder_compressKey() {
+		ImmutableHugeHashMap<Integer, Long> list = new ImmutableHugeHashMap.Builder<Integer, Long>().compressKey().build();
+		assertEquals(true, (list.getKeyConverter() instanceof ZipCompressionConverter));
+	}
+	
+	@Test
+	public void testBuilder_compressValue() {
+		ImmutableHugeHashMap<Integer, Long> list = new ImmutableHugeHashMap.Builder<Integer, Long>().compressValue().build();
+		assertEquals(true, (list.getValueConverter() instanceof ZipCompressionConverter));
+	}
+	
 	@Test
 	public void testBuilder_bufferSize() {
 		ImmutableHugeHashMap<Integer, Long> map = new ImmutableHugeHashMap.Builder<Integer, Long>().bufferSize(1234).build();

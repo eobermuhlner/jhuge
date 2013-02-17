@@ -259,7 +259,7 @@ public abstract class AbstractSerializableConverterTest {
 			return getClass().getSimpleName() + "{" + super.toString() + "}";
 		}
 	}
-	
+
 	/**
 	 * Asserts the correct {@link Converter#serialize(Object)} and {@link Converter#deserialize(byte[])} behavior with the specified object instance.
 	 * 
@@ -267,6 +267,17 @@ public abstract class AbstractSerializableConverterTest {
 	 * @param object the object to convert
 	 */
 	public static <T> void assertConvert(Converter<T> converter, T object) {
+		assertConvert(converter, object, true);
+	}
+	
+	/**
+	 * Asserts the correct {@link Converter#serialize(Object)} and {@link Converter#deserialize(byte[])} behavior with the specified object instance.
+	 * 
+	 * @param converter the {@link Converter} to test
+	 * @param object the object to convert
+	 * @param strict <code>true</code> to assert that the deserialized object can be serialized again and both byte arrays (first and second serialization) are equal, <code>false</code> to do not test this
+	 */
+	public static <T> void assertConvert(Converter<T> converter, T object, boolean strict) {
 		String desc = "object=" + object;
 
 		int serializedLength = converter.serializedLength();
@@ -281,6 +292,11 @@ public abstract class AbstractSerializableConverterTest {
 			return;
 		}
 		assertEquals(desc, object, deserializedObject);
+
+		if (strict) {
+			byte[] data2 = converter.serialize(deserializedObject);
+			assertArrayEquals(data, data2);
+		}
 	}
 	
 	public static void assertArrayEquals(Object expected, Object actual) {

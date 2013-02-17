@@ -11,6 +11,7 @@ import org.junit.Test;
 import ch.obermuhlner.jhuge.collection.HugeArrayList.Builder;
 import ch.obermuhlner.jhuge.converter.Converters;
 import ch.obermuhlner.jhuge.converter.IntegerConverter;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -72,6 +73,12 @@ public abstract class AbstractHugeArrayListTest extends AbstractListTest {
 	public void testBuilder_elementConverter() {
 		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().element(new IntegerConverter()).build();
 		assertEquals(true, (list.getElementConverter() instanceof IntegerConverter));
+	}
+
+	@Test
+	public void testBuilder_compressElement() {
+		HugeArrayList<Integer> list = new HugeArrayList.Builder<Integer>().compressElement().build();
+		assertEquals(true, (list.getElementConverter() instanceof ZipCompressionConverter));
 	}
 
 	@Test

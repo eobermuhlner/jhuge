@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.converter.Converters;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -23,6 +24,8 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 	private Integer blockSize;
 	
 	private Converter<E> elementConverter;
+	
+	private boolean compressElement;
 
 	private MemoryManager memoryManager;
 
@@ -71,6 +74,18 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 	public AbstractHugeCollectionBuilder<E> element(Converter<E> elementConverter) {
 		checkPrepared();
 		this.elementConverter = elementConverter;
+		return this;
+	}
+	
+	/**
+	 * Specifies that the serialized elements should be stored in a compressed form.
+	 * 
+	 * @return this {@link CollectionBuilder} to chain calls
+	 * @throws IllegalStateException if called after adding the first element to this builder
+	 */
+	public AbstractHugeCollectionBuilder<E> compressElement() {
+		checkPrepared();
+		this.compressElement = true;
 		return this;
 	}
 	
@@ -157,6 +172,10 @@ public abstract class AbstractHugeCollectionBuilder<E> implements CollectionBuil
 			}
 			
 			elementConverter = Converters.bestConverter(elementClass, classLoader);
+		}
+		
+		if (compressElement) {
+			elementConverter = new ZipCompressionConverter<E>(elementConverter);
 		}
 		
 		if (memoryManager == null) {

@@ -11,6 +11,7 @@ import org.junit.Test;
 import ch.obermuhlner.jhuge.collection.HugeHashSet.Builder;
 import ch.obermuhlner.jhuge.converter.Converters;
 import ch.obermuhlner.jhuge.converter.IntegerConverter;
+import ch.obermuhlner.jhuge.converter.ZipCompressionConverter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 import ch.obermuhlner.jhuge.memory.MemoryMappedFileManager;
 
@@ -71,6 +72,12 @@ public abstract class AbstractHugeHashSetTest extends AbstractSetTest {
 	public void testBuilder_elementConverter() {
 		HugeHashSet<Integer> list = new HugeHashSet.Builder<Integer>().element(new IntegerConverter()).build();
 		assertEquals(true, (list.getElementConverter() instanceof IntegerConverter));
+	}
+
+	@Test
+	public void testBuilder_compressElement() {
+		HugeHashSet<Integer> list = new HugeHashSet.Builder<Integer>().compressElement().build();
+		assertEquals(true, (list.getElementConverter() instanceof ZipCompressionConverter));
 	}
 
 	@Test

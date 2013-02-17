@@ -125,6 +125,18 @@ public class ImmutableHugeHashMap<K, V> extends AbstractHugeHashMap<K, V> {
 		}
 		
 		@Override
+		public Builder<K, V> compressKey() {
+			super.compressKey();
+			return this;
+		}
+		
+		@Override
+		public Builder<K, V> compressValue() {
+			super.compressValue();
+			return this;
+		}
+		
+		@Override
 		public Builder<K, V> bufferSize(int bufferSize) {
 			super.bufferSize(bufferSize);
 			return this;
