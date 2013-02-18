@@ -83,14 +83,8 @@ The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.2
 		
 		Map<Integer, String> map = builder.build(); // once the Map is created it can no longer be modified
 		
-		int index = 0;
 		for (Integer key : map.keySet()) {
-			System.out.print(key);
-			if (++index % 20 == 0) {
-				System.out.println();
-			} else {
-				System.out.print(" ");
-			}
+			System.out.println(key + " : " + map.get(key);
 		}
 ```
 
