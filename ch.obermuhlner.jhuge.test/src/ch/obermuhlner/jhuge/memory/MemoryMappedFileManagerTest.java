@@ -1,6 +1,9 @@
 package ch.obermuhlner.jhuge.memory;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Random;
 
@@ -15,6 +18,67 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 	@Override
 	protected MemoryManager createMemoryManager() {
 		return new MemoryMappedFileManager();
+	}
+	
+	@Test
+	public void testSizes() {
+		MemoryMappedFileManager memoryManager = new MemoryMappedFileManager(200, -1, 32, false);
+
+		assertEquals(0, memoryManager.getAllocatedBlocks());
+		assertEquals(0, memoryManager.getFreeBlocks()); // no buffer created yet - so there are no free blocks
+		assertEquals(0, memoryManager.getUsedBytes());
+		assertEquals(0, memoryManager.getFreeBytes());
+		assertEquals(0, memoryManager.getTotalBytes());
+		
+		long address1 = memoryManager.allocate(20); // allocate from buffer #1
+		assertEquals(20, memoryManager.read(address1).length);
+		assertEquals(1, memoryManager.getAllocatedBlocks());
+		assertEquals(1, memoryManager.getFreeBlocks()); // one big free block in buffer #1 
+		assertEquals(20, memoryManager.getUsedBytes());
+		assertEquals(200-4-20-4, memoryManager.getFreeBytes());
+		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(200-4-20-4), memoryManager.getFreeBlockSizes());
+		
+		memoryManager.free(address1);
+		assertEquals(0, memoryManager.getAllocatedBlocks());
+		assertEquals(2, memoryManager.getFreeBlocks());
+		assertEquals(200-4-4, memoryManager.getFreeBytes());
+		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(20, 200-4-20-4), memoryManager.getFreeBlockSizes());
+		
+		memoryManager.compact();
+		assertEquals(1, memoryManager.getFreeBlocks());
+		assertEquals(200-4, memoryManager.getFreeBytes());
+		assertEquals(200-4, memoryManager.getTotalBytes());
+		System.out.println("Free3 " + memoryManager.getFreeBlockSizes());
+		assertEquals(Arrays.asList(200-4), memoryManager.getFreeBlockSizes());
+		
+		long address2 = memoryManager.allocate(60); // allocated from buffer #1
+		assertEquals(60, memoryManager.read(address2).length);
+		assertEquals(1, memoryManager.getAllocatedBlocks());
+		assertEquals(1, memoryManager.getFreeBlocks());
+		assertEquals(60, memoryManager.getUsedBytes());
+		assertEquals(200-4-60-4, memoryManager.getFreeBytes());
+		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(200-4-60-4), memoryManager.getFreeBlockSizes());
+
+		long address3 = memoryManager.allocate(150); // need to create buffer #2
+		assertEquals(150, memoryManager.read(address3).length);
+		assertEquals(2, memoryManager.getAllocatedBlocks());
+		assertEquals(2, memoryManager.getFreeBlocks());
+		assertEquals(60+150, memoryManager.getUsedBytes());
+		assertEquals(200-4-60-4 +200-4-150-4, memoryManager.getFreeBytes());
+		assertEquals(200-4 +200-4, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(200-4-150-4, 200-4-60-4), memoryManager.getFreeBlockSizes());
+		
+		long address4 = memoryManager.allocate(120); // allocated from buffer #1 - with oversize taking the entire free block of buffer #1
+		assertEquals((200-4-60-4), memoryManager.read(address4).length);
+		assertEquals(3, memoryManager.getAllocatedBlocks());
+		assertEquals(1, memoryManager.getFreeBlocks());
+		assertEquals(60+150+(200-4-60-4), memoryManager.getUsedBytes());
+		assertEquals(0 +200-4-150-4, memoryManager.getFreeBytes());
+		assertEquals(200-4 +200-4, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(200-4-150-4), memoryManager.getFreeBlockSizes());
 	}
 	
 	@Test
@@ -111,6 +175,9 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 			
 			System.out.println("Alloc: " + blocks.size());
 			System.out.println("Free : " + memoryManager.getFreeBlockSizes());
+			long overheadBytes = memoryManager.getTotalBytes() - memoryManager.getUsedBytes() - memoryManager.getFreeBytes();
+			System.out.printf("Memory used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", memoryManager.getUsedBytes(), memoryManager.getFreeBytes(), memoryManager.getTotalBytes(), overheadBytes, memoryManager.getAllocatedBlocks(), memoryManager.getFreeBlocks());
+			System.out.println();
 		}
 	}
 }
