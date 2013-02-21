@@ -83,34 +83,27 @@ The [Benchmark Report](http://eobermuhlner.github.com/jhuge/releases/release-0.2
 		
 		Map<Integer, String> map = builder.build(); // once the Map is created it can no longer be modified
 		
-		int index = 0;
 		for (Integer key : map.keySet()) {
-			System.out.print(key);
-			if (++index % 20 == 0) {
-				System.out.println();
-			} else {
-				System.out.print(" ");
-			}
+			System.out.println(key + " : " + map.get(key);
 		}
 ```
- 
-## Caveats
+
+## New Features in Release 0.2
 
 ### Tradeoff Faster vs. Compact
 
-The builder option `faster()` to trade some Java heap consumption against improved performance is fully implemented in the List implementations:
+The builder option `faster()` to trade some Java heap consumption against improved performance is now fully implemented in all implementations:
 - HugeArrayList
-- ImmutableHugeArrayList
-
-The Set and Map implementations are functionally complete but currently only the `faster()` mode is implemented:
 - HugeHashSet
 - HugeHashMap
+- ImmutableHugeArrayList
 - ImmutableHugeHashSet
 - ImmutableHugeHashMap
 
-For these 4 classes the faster mode is the default and the compact mode is not yet implemented.
-The faster mode still uses a standard HashMap to store the infrastructure.
-With the next release this should be available.
+
+
+## Caveats
+
 
 ### Converters
 
