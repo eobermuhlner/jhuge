@@ -77,6 +77,15 @@ public class SerializableConverter<T extends Serializable> implements Converter<
 		catch (IOException exception) {
 			throw new IllegalArgumentException(exception);
 		}
+		finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException exception) {
+					// ignore
+				}
+			}
+		}
 	}
 
 	/**
