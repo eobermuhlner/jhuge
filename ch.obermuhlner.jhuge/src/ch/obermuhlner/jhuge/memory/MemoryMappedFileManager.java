@@ -233,7 +233,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 				if (calulatedAddressAfterLeft == rightAddress) {
 					int combinedLength = leftLength + 4 + rightLength;
 					setLength(leftAddress, combinedLength);
-					freeBlocks.remove(freeBlocks.indexOf(leftAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
+					freeBlocks.remove(freeBlocks.indexOf(rightAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
 					freeBytes += 4;
 				} else {
 					if (calulatedAddressAfterLeft > rightAddress) {
