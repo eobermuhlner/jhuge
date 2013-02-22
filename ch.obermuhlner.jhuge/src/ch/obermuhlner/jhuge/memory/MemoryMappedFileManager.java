@@ -29,25 +29,58 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	public static final int GIGABYTES = 1024 * MEGABYTES;
 
 	/**
-	 * The constant to specify that allocated blocks will always have exactly the specified length
+	 * Constant to specify that allocated blocks will always have exactly the specified length
 	 * and not be quantified to a block size. 
 	 */
 	public static final int NO_BLOCK_SIZE = -1;
 	
-	private static final boolean DEBUG_MODE = false;
-	private static final boolean DEBUG_TRACKING_MODE = false;
+	/**
+	 * Used to specify that an address is invalid.
+	 */
+	private static final long NO_ADDRESS = -1;
+
+	private static final boolean DEBUG = false;
+	private static final boolean DEBUG_TRACKING = false;
+	private static final boolean DEBUG_TRACKING_DETAILS = false;
 	
+	/**
+	 * Fake block that can be returned when a block of 0 bytes is allocated.
+	 */
 	private static byte[] EMPTY_BLOCK_DATA = new byte[4]; // size is initialized to 0
 	
+	/**
+	 * The list of memory mapped {@link ByteBuffer}s.
+	 */
 	private final List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+	
 	private final int bufferSize;
 	private final int blockSize;
 	private final int allowedBlockOversize;
 	private final boolean compactAfterFree;
 	
-	private final LongArray freeBlocks = new JavaLongArray();
+	/**
+	 * The list of free blocks.
+	 * 
+	 * This list must be tracked in order for {@link #findFreeBlock2(int)} to find a free block.
+	 */
+	private final LongArray freeBlocksList = new JavaLongArray();
 	
-	private long emptyBlockAddress = -1;
+	/**
+	 * The list of allocated blocks, or <code>null</code>.
+	 * 
+	 * This list must not be tracked, since we assume that the client code remembers which addresses he has allocated.
+	 * In {@link #DEBUG} mode this is tracked so that additional information can be verified and printed.
+	 */
+	private final LongArray allocatedBlocksList = DEBUG ? new JavaLongArray() : null;
+	
+	/**
+	 * The address of the fake {@link #EMPTY_BLOCK_DATA}.
+	 * 
+	 * The first time a block of 0 bytes is allocated, the address is stored here.
+	 * This empty block will never be freed again.
+	 * During {@link #reset()} this is reset to {@link #NO_ADDRESS}.
+	 */
+	private long emptyBlockAddress = NO_ADDRESS;
 
 	private long usedBytes;
 	private long freeBytes;
@@ -120,18 +153,19 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	@Override
 	public long allocate(int length) {
 		if (length == 0) {
-			if (emptyBlockAddress == -1) {
+			if (emptyBlockAddress == NO_ADDRESS) {
 				emptyBlockAddress = findFreeBlock(0);
 				allocatedBlocks++;
 			}
-			if (DEBUG_TRACKING_MODE) printTrackingInfo("allocate", length);
+			if (DEBUG_TRACKING) printTrackingInfo("allocate", length);
 			return emptyBlockAddress;
 		}
 		
 		long address = findFreeBlock(quantify(length));
+		if (DEBUG) allocatedBlocksList.add(address);
 		allocatedBlocks++;
 		
-		if (DEBUG_TRACKING_MODE) printTrackingInfo("allocate", length);
+		if (DEBUG_TRACKING) printTrackingInfo("allocate", length);
 		return address;
 	}
 
@@ -139,7 +173,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	public byte[] read(long address) {
 		ByteBuffer byteBuffer = readByteBufferInternal(address);
 		int length = byteBuffer.getInt();
-		checkBlockLength(address, length);
+		if (DEBUG) checkBlockLength(address, length);
 		
 		byte[] data = new byte[length];
 		byteBuffer.get(data);
@@ -164,7 +198,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	public void write(long address, byte[] data) {
 		ByteBuffer buffer = writeByteBufferInternal(address);
 		int length = buffer.getInt();
-		checkBlockLength(address, length);
+		if (DEBUG) checkBlockLength(address, length);
 		
 		if (length < data.length) {
 			throw new IllegalArgumentException("data.length " + data.length + " > block.length " + length);
@@ -194,17 +228,24 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		}
 		
 		int length = getLength(address);
-		checkBlockLength(address, length);
+		if (DEBUG) checkBlockLength(address, length);
 		
+		if (DEBUG) {
+			int index = allocatedBlocksList.indexOf(address);
+			if (index < 0) {
+				throw new IllegalArgumentException("Address was never allocated:" + address);
+			}
+			allocatedBlocksList.remove(index);
+		}
 		allocatedBlocks--;
 		freeBytes += length;
 		usedBytes -= length;
-		freeBlocks.add(address);
+		freeBlocksList.add(address);
 		
 		if (compactAfterFree) {
 			compact();
 		}
-		if (DEBUG_TRACKING_MODE) printTrackingInfo("free", length);
+		if (DEBUG_TRACKING) printTrackingInfo("free", length);
 	}
 	
 	/**
@@ -213,11 +254,11 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * <p>This might lead to larger free memory blocks.</p>
 	 */
 	public void compact() {
-		int n = freeBlocks.size();
+		int n = freeBlocksList.size();
 		// TODO sort freeBlocks as soon as LongArray.sort() is available
 		List<Long> addresses = new ArrayList<Long>(n);
 		for (int i = 0; i < n; i++) {
-			addresses.add(freeBlocks.get(i));
+			addresses.add(freeBlocksList.get(i));
 		}
 		
 		Collections.sort(addresses);
@@ -233,7 +274,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 				if (calulatedAddressAfterLeft == rightAddress) {
 					int combinedLength = leftLength + 4 + rightLength;
 					setLength(leftAddress, combinedLength);
-					freeBlocks.remove(freeBlocks.indexOf(rightAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
+					freeBlocksList.remove(freeBlocksList.indexOf(rightAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
 					freeBytes += 4;
 				} else {
 					if (calulatedAddressAfterLeft > rightAddress) {
@@ -246,8 +287,14 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 	@Override
 	public void reset() {
-		freeBlocks.clear();
-		emptyBlockAddress = -1;
+		usedBytes = 0;
+		freeBytes = 0;
+		allocatedBlocks = 0;
+		totalBytes = 0;
+
+		freeBlocksList.clear();
+		emptyBlockAddress = NO_ADDRESS;
+		
 		for (int i = 0; i < buffers.size(); i++) {
 			initFreeBuffer(i, buffers.get(i));
 		}
@@ -295,12 +342,46 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * @return the number of free blocks
 	 */
 	public int getFreeBlocks() {
-		return freeBlocks.size();
+		return freeBlocksList.size();
 	}
 
 	private void printTrackingInfo(String method, int length) {
 		long overheadBytes = totalBytes-usedBytes-freeBytes;
-		System.out.printf("Memory %-10s %6d : used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", method, length, usedBytes, freeBytes, totalBytes, overheadBytes, allocatedBlocks, freeBlocks.size());
+		
+		if (DEBUG_TRACKING) {
+			System.out.printf("Memory %-10s %6d : used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", method, length, usedBytes, freeBytes, totalBytes, overheadBytes, allocatedBlocks, freeBlocksList.size());
+		}
+
+		if (DEBUG_TRACKING_DETAILS) {
+			long totalFreeBytes = 0;
+			System.out.println("Free blocks:");
+			for (int i = 0; i < freeBlocksList.size(); i++) {
+				long address = freeBlocksList.get(i);
+				int blockLength = getLengthOfFreeBlock(address);
+				System.out.printf("   free block[%d] address=%10d length=%6d\n", i, address, blockLength);
+				totalFreeBytes += blockLength;
+			}
+			System.out.println("Total free bytes: " + totalFreeBytes);
+
+			if (DEBUG) {
+				long totalAllocatedBytes = 0;
+				System.out.println("Allocated blocks:");
+				for (int i = 0; i < allocatedBlocksList.size(); i++) {
+					long address = allocatedBlocksList.get(i);
+					int blockLength = getLength(address);
+					System.out.printf("  alloc block[%d] address=%10d length=%6d\n", i, address, blockLength);
+					totalAllocatedBytes += blockLength;
+				}
+				System.out.println("Total alloc bytes: " + totalAllocatedBytes);
+			}
+		}
+
+		if (DEBUG) {
+			int expectedOverheadBytes = (allocatedBlocks + freeBlocksList.size()) * 4;
+			if (expectedOverheadBytes != overheadBytes) {
+				throw new RuntimeException("expected overhead=" + expectedOverheadBytes + " actualOverhead=" + overheadBytes);
+			}
+		}
 	}
 	
 	/**
@@ -339,7 +420,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 //	}
 
 	private void checkBlockLength(long address, int length) {
-		if (DEBUG_MODE) {
+		if (DEBUG) {
 			if (!isSameBuffer(address, address + length)) {
 				throw new IllegalStateException("end of block is in the next buffer: address=" + address + " length=" + length + " bufferSize=" + bufferSize);
 			}
@@ -358,10 +439,10 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * @return a snapshot of the sizes of the the free memory blocks
 	 */
 	public List<Integer> getFreeBlockSizes() {
-		int n = freeBlocks.size();
+		int n = freeBlocksList.size();
 		ArrayList<Integer> snapshot = new ArrayList<Integer>(n);
-		for (int i = 0; i < freeBlocks.size(); i++) {
-			snapshot.add(getLengthOfFreeBlock(freeBlocks.get(i)));
+		for (int i = 0; i < freeBlocksList.size(); i++) {
+			snapshot.add(getLengthOfFreeBlock(freeBlocksList.get(i)));
 		}
 		Collections.sort(snapshot);
 		return snapshot;
@@ -369,7 +450,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{buffers=" + buffers.size() + ", bufferSize=" + bufferSize + ", freeblocks=" + freeBlocks.size() + "}";
+		return getClass().getSimpleName() + "{buffers=" + buffers.size() + ", bufferSize=" + bufferSize + ", freeblocks=" + freeBlocksList.size() + "}";
 	}
 	
 	private int getLengthOfFreeBlock(long address) {
@@ -383,13 +464,13 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		ByteBuffer buffer = buffers.get(bufferIndex);
 		buffer.position(bufferPos);
 		int length = buffer.getInt();
-		checkBlockLength(address, length);
+		if (DEBUG) checkBlockLength(address, length);
 		
 		return length;
 	}
 	
 	private void setLength(long address, int length) {
-		checkBlockLength(address, length);
+		if (DEBUG) checkBlockLength(address, length);
 
 		int bufferIndex = (int) (address / bufferSize);
 		int bufferPos = (int) (address % bufferSize);
@@ -418,12 +499,12 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 		long freeBlock = findFreeBlock2(length);
 
-		if (freeBlock < 0) {
+		if (freeBlock == NO_ADDRESS) {
 			compact();
 			freeBlock = findFreeBlock2(length);
 		}
 		
-		if (freeBlock < 0) {
+		if (freeBlock == NO_ADDRESS) {
 			addMemoryMappedFile();
 			freeBlock = findFreeBlock2(length);
 		}
@@ -433,11 +514,11 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 	private long findFreeBlock2(int length) {
 		int bestBlockIndex = -1;
-		long bestBlockAddress = -1;
+		long bestBlockAddress = NO_ADDRESS;
 		int bestBlockLength = -1;
-		final int n = freeBlocks.size();
+		final int n = freeBlocksList.size();
 		for (int i = 0; i < n; i++) {
-			long blockAddress = freeBlocks.get(i);
+			long blockAddress = freeBlocksList.get(i);
 			int blockLength = getLengthOfFreeBlock(blockAddress);
 			if (blockLength >= length) {
 				if (blockLength - length <= allowedBlockOversize) {
@@ -455,10 +536,10 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		}
 
 		if (bestBlockIndex < 0) {
-			return -1;
+			return NO_ADDRESS;
 		}
 		
-		freeBlocks.remove(bestBlockIndex);
+		freeBlocksList.remove(bestBlockIndex);
 		freeBytes -= bestBlockLength;
 		usedBytes += bestBlockLength;
 		
@@ -488,7 +569,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 			buffer.clear();
 			buffer.putInt(bufferLength);
 
-			totalBytes += bufferLength;
+			totalBytes += bufferSize;
 			usedBytes += bufferLength; // corrected in addFreeBlock()
 			
 			long blockAddress = bufferIndex * bufferSize;
@@ -496,8 +577,8 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	}
 
 	private void addFreeBlock(long address, int length) {
-		checkBlockLength(address, length);
-		freeBlocks.add(address);
+		if (DEBUG) checkBlockLength(address, length);
+		freeBlocksList.add(address);
 		
 		freeBytes += length;
 		usedBytes -= length;

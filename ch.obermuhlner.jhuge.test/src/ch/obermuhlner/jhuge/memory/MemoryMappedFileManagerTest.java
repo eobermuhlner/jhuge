@@ -36,20 +36,20 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(1, memoryManager.getFreeBlocks()); // one big free block in buffer #1 
 		assertEquals(20, memoryManager.getUsedBytes());
 		assertEquals(200-4-20-4, memoryManager.getFreeBytes());
-		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(200, memoryManager.getTotalBytes());
 		assertEquals(Arrays.asList(200-4-20-4), memoryManager.getFreeBlockSizes());
 		
 		memoryManager.free(address1);
 		assertEquals(0, memoryManager.getAllocatedBlocks());
 		assertEquals(2, memoryManager.getFreeBlocks());
 		assertEquals(200-4-4, memoryManager.getFreeBytes());
-		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(200, memoryManager.getTotalBytes());
 		assertEquals(Arrays.asList(20, 200-4-20-4), memoryManager.getFreeBlockSizes());
 		
 		memoryManager.compact();
 		assertEquals(1, memoryManager.getFreeBlocks());
 		assertEquals(200-4, memoryManager.getFreeBytes());
-		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(200, memoryManager.getTotalBytes());
 		System.out.println("Free3 " + memoryManager.getFreeBlockSizes());
 		assertEquals(Arrays.asList(200-4), memoryManager.getFreeBlockSizes());
 		
@@ -59,7 +59,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(1, memoryManager.getFreeBlocks());
 		assertEquals(60, memoryManager.getUsedBytes());
 		assertEquals(200-4-60-4, memoryManager.getFreeBytes());
-		assertEquals(200-4, memoryManager.getTotalBytes());
+		assertEquals(200, memoryManager.getTotalBytes());
 		assertEquals(Arrays.asList(200-4-60-4), memoryManager.getFreeBlockSizes());
 
 		long address3 = memoryManager.allocate(150); // need to create buffer #2
@@ -68,7 +68,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(2, memoryManager.getFreeBlocks());
 		assertEquals(60+150, memoryManager.getUsedBytes());
 		assertEquals(200-4-60-4 +200-4-150-4, memoryManager.getFreeBytes());
-		assertEquals(200-4 +200-4, memoryManager.getTotalBytes());
+		assertEquals(200 +200, memoryManager.getTotalBytes());
 		assertEquals(Arrays.asList(200-4-150-4, 200-4-60-4), memoryManager.getFreeBlockSizes());
 		
 		long address4 = memoryManager.allocate(120); // allocated from buffer #1 - with oversize taking the entire free block of buffer #1
@@ -77,8 +77,16 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(1, memoryManager.getFreeBlocks());
 		assertEquals(60+150+(200-4-60-4), memoryManager.getUsedBytes());
 		assertEquals(0 +200-4-150-4, memoryManager.getFreeBytes());
-		assertEquals(200-4 +200-4, memoryManager.getTotalBytes());
+		assertEquals(200 +200, memoryManager.getTotalBytes());
 		assertEquals(Arrays.asList(200-4-150-4), memoryManager.getFreeBlockSizes());
+		
+		memoryManager.reset();
+		assertEquals(0, memoryManager.getAllocatedBlocks());
+		assertEquals(2, memoryManager.getFreeBlocks());
+		assertEquals(0, memoryManager.getUsedBytes());
+		assertEquals(200-4 + 200-4, memoryManager.getFreeBytes());
+		assertEquals(200 +200, memoryManager.getTotalBytes());
+		assertEquals(Arrays.asList(200-4, 200-4), memoryManager.getFreeBlockSizes());
 	}
 	
 	@Test
