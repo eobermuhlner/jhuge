@@ -101,6 +101,26 @@ The builder option `faster()` to trade some Java heap consumption against improv
 - ImmutableHugeHashMap
 
 
+# Features in Release 0.1
+
+### Huge Collections
+
+The following huge collections are implemented:
+- HugeArrayList
+- HugeHashSet
+- HugeHashMap
+- ImmutableHugeArrayList
+- ImmutableHugeHashSet
+- ImmutableHugeHashMap
+
+
+### Tradeoff Faster vs. Compact
+
+The builder option `faster()` to trade some Java heap consumption against improved performance is implemented in:
+- HugeArrayList
+- ImmutableHugeArrayList
+
+
 
 ## Caveats
 
