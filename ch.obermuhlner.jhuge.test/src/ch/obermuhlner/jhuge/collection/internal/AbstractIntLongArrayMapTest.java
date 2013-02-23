@@ -19,6 +19,8 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public abstract class AbstractIntLongArrayMapTest {
 
+	private static final boolean DEBUG = false;
+	
 	private static final long[] ARRAY_0 = { };
 	private static final long[] ARRAY_1 = { 1L };
 	private static final long[] ARRAY_2 = { 2L, 22L };
@@ -314,11 +316,11 @@ public abstract class AbstractIntLongArrayMapTest {
 			
 			int operation = random.nextInt(100);
 			if (operation <= 60) {
-				System.out.println(desc + " put " + randomKey + " " + randomValue);
+				if (DEBUG) System.out.println(desc + " put " + randomKey + " " + randomValue);
 				map.put(randomKey, randomValue);
 				
 			} else if (operation <= 100) {
-				System.out.println(desc + " remove " + randomKey);
+				if (DEBUG) System.out.println(desc + " remove " + randomKey);
 				map.remove(randomKey);
 			}
 		}

@@ -26,6 +26,8 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public abstract class AbstractMapTest {
 
+	private static final boolean DEBUG = false;
+
 	protected abstract <K, V> Map<K, V> createMap(Pair<K, V>... initial);
 
 	protected abstract boolean supportsMutable();
@@ -788,9 +790,6 @@ public abstract class AbstractMapTest {
 			assertNotNull(map.toString());
 		}
 	}
-
-
-	private static final boolean DEBUG = false;
 
 	@Test
 	public void testRandom() {

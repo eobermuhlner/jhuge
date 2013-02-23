@@ -15,6 +15,8 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 
+	private static final boolean DEBUG = false;
+	
 	@Override
 	protected MemoryManager createMemoryManager() {
 		return new MemoryMappedFileManager();
@@ -50,7 +52,6 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(1, memoryManager.getFreeBlocks());
 		assertEquals(200-4, memoryManager.getFreeBytes());
 		assertEquals(200, memoryManager.getTotalBytes());
-		System.out.println("Free3 " + memoryManager.getFreeBlockSizes());
 		assertEquals(Arrays.asList(200-4), memoryManager.getFreeBlockSizes());
 		
 		long address2 = memoryManager.allocate(60); // allocated from buffer #1
@@ -169,23 +170,25 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 			
 			if (r < 60) {
 				int length = random.nextInt(50);
-				System.out.println(desc + " allocate " + length + " bytes");
+				if (DEBUG) System.out.println(desc + " allocate " + length + " bytes");
 				long address = memoryManager.allocate(length);
 				blocks.add(address);
 			
 			} else if (r < 100) {
 				if (!blocks.isEmpty()) {
 					long address = blocks.removeFirst();
-					System.out.println(desc + " free " + memoryManager.read(address).length + " bytes");
+					if (DEBUG) System.out.println(desc + " free " + memoryManager.read(address).length + " bytes");
 					memoryManager.free(address);
 				}
 			}
 			
-			System.out.println("Alloc: " + blocks.size());
-			System.out.println("Free : " + memoryManager.getFreeBlockSizes());
-			long overheadBytes = memoryManager.getTotalBytes() - memoryManager.getUsedBytes() - memoryManager.getFreeBytes();
-			System.out.printf("Memory used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", memoryManager.getUsedBytes(), memoryManager.getFreeBytes(), memoryManager.getTotalBytes(), overheadBytes, memoryManager.getAllocatedBlocks(), memoryManager.getFreeBlocks());
-			System.out.println();
+			if (DEBUG) {
+				System.out.println("Alloc: " + blocks.size());
+				System.out.println("Free : " + memoryManager.getFreeBlockSizes());
+				long overheadBytes = memoryManager.getTotalBytes() - memoryManager.getUsedBytes() - memoryManager.getFreeBytes();
+				System.out.printf("Memory used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", memoryManager.getUsedBytes(), memoryManager.getFreeBytes(), memoryManager.getTotalBytes(), overheadBytes, memoryManager.getAllocatedBlocks(), memoryManager.getFreeBlocks());
+				System.out.println();
+			}
 		}
 	}
 }

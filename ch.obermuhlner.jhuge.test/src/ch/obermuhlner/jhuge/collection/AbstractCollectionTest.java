@@ -25,6 +25,8 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public abstract class AbstractCollectionTest {
 
+	private static final boolean DEBUG = false;
+	
 	protected abstract <T> Collection<T> createCollection(T... initial);
 
 	protected abstract boolean supportsMutable();
@@ -567,8 +569,6 @@ public abstract class AbstractCollectionTest {
 		}
 	}
 
-	private static final boolean DEBUG = false;
-	
 	@Test
 	public void testRandom() {
 		if (supportsMutable()) {
