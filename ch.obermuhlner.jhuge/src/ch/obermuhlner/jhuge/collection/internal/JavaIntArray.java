@@ -3,7 +3,7 @@ package ch.obermuhlner.jhuge.collection.internal;
 /**
  * A {@link LongArray} implementation that stores the values in a <code>long[]</code>.
  */
-public class JavaIntArray implements IntArray {
+public class JavaIntArray extends AbstractIntArray {
 
 	private int[] array;
 

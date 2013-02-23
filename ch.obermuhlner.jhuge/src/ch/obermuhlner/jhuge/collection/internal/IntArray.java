@@ -56,4 +56,12 @@ public interface IntArray {
 	 * @return the size of the array
 	 */
 	int size();
+
+	/**
+	 * Returns the index of the first occurrence of the specified element.
+	 * 
+	 * @param element the element to search for
+	 * @return the index of the first occurrence, or -1 if not found
+	 */
+	int indexOf(int element);
 }
