@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 import ch.obermuhlner.jhuge.collection.internal.HugeIntLongArrayMap;
 import ch.obermuhlner.jhuge.collection.internal.IntIterator;
 import ch.obermuhlner.jhuge.collection.internal.IntLongArrayMap;
-import ch.obermuhlner.jhuge.collection.internal.JavaIntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveIntLongArrayMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
@@ -53,7 +53,7 @@ public abstract class AbstractHugeHashMap<K, V> extends AbstractMap<K, V> {
 		this.keyConverter = keyConverter;
 		this.valueConverter = valueConverter;
 		
-		hashCodeMap = faster ? new JavaIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
+		hashCodeMap = faster ? new PrimitiveIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
 	}
 	
 	/**

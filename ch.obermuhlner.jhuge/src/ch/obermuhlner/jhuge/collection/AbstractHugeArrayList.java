@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.obermuhlner.jhuge.collection.internal.HugeLongArray;
-import ch.obermuhlner.jhuge.collection.internal.JavaLongArray;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveLongArray;
 import ch.obermuhlner.jhuge.collection.internal.LongArray;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
@@ -47,7 +47,7 @@ public abstract class AbstractHugeArrayList<E> extends AbstractList<E> {
 	protected AbstractHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
-		this.addresses = faster ? new JavaLongArray(capacity) : new HugeLongArray(memoryManager, capacity);
+		this.addresses = faster ? new PrimitiveLongArray(capacity) : new HugeLongArray(memoryManager, capacity);
 	}
 
 	/**

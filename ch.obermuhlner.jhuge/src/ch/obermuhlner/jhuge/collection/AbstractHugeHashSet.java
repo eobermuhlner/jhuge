@@ -9,7 +9,7 @@ import java.util.Set;
 import ch.obermuhlner.jhuge.collection.internal.HugeIntLongArrayMap;
 import ch.obermuhlner.jhuge.collection.internal.IntIterator;
 import ch.obermuhlner.jhuge.collection.internal.IntLongArrayMap;
-import ch.obermuhlner.jhuge.collection.internal.JavaIntLongArrayMap;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveIntLongArrayMap;
 import ch.obermuhlner.jhuge.converter.Converter;
 import ch.obermuhlner.jhuge.memory.MemoryManager;
 
@@ -49,7 +49,7 @@ public abstract class AbstractHugeHashSet<E> extends AbstractSet<E> {
 		this.memoryManager = memoryManager;
 		this.converter = converter;
 		
-		hashCodeMap = faster ? new JavaIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
+		hashCodeMap = faster ? new PrimitiveIntLongArrayMap(capacity) : new HugeIntLongArrayMap(memoryManager, capacity);
 	}
 
 	/**

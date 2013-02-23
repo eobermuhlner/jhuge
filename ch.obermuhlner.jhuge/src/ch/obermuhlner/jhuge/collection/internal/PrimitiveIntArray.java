@@ -1,45 +1,45 @@
 package ch.obermuhlner.jhuge.collection.internal;
 
 /**
- * A {@link LongArray} implementation that stores the values in a <code>long[]</code>.
+ * A {@link IntArray} implementation that stores the values in a Java primitive <code>int[]</code>.
  */
-public class JavaLongArray extends AbstractLongArray {
+public class PrimitiveIntArray extends AbstractIntArray {
 
-	private long[] array;
+	private int[] array;
 
 	private int size;
 
 	/**
-	 * Construct a {@link JavaLongArray}.
+	 * Construct a {@link PrimitiveIntArray}.
 	 */
-	public JavaLongArray() {
+	public PrimitiveIntArray() {
 		this(8);
 	}
 	
 	/**
-	 * Construct a {@link JavaLongArray} with the specified initial capacity.
+	 * Construct a {@link PrimitiveIntArray} with the specified initial capacity.
 	 * 
 	 * @param capacity the initial capacity 
 	 */
-	public JavaLongArray(int capacity) {
-		array = new long[capacity];
+	public PrimitiveIntArray(int capacity) {
+		array = new int[capacity];
 	}
 	
 	@Override
-	public long set(int index, long value) {
+	public int set(int index, int value) {
 		checkSize(index);
 		
-		long oldValue = array[index];
+		int oldValue = array[index];
 		array[index] = value;
 		return oldValue;
 	}
 
 	@Override
-	public void add(int index, long value) {
+	public void add(int index, int value) {
 		checkSizeIncludingRightBound(index);
 		
 		if (size == array.length) {
-			long[] newArray = new long[array.length * 2];
+			int[] newArray = new int[array.length * 2];
 			System.arraycopy(array, 0, newArray, 0, index);
 			newArray[index] = value;
 			System.arraycopy(array, index, newArray, index + 1, size - index);
@@ -53,21 +53,21 @@ public class JavaLongArray extends AbstractLongArray {
 	}
 
 	@Override
-	public void add(long value) {
+	public void add(int value) {
 		add(size, value);
 	}
 
 	@Override
-	public long get(int index) {
+	public int get(int index) {
 		checkSize(index);
 		return array[index];
 	}
 	
 	@Override
-	public long remove(int index) {
+	public int remove(int index) {
 		checkSize(index);
 
-		long oldValue = array[index];
+		int oldValue = array[index];
 		System.arraycopy(array, index + 1, array, index, size - index - 1);
 		size--;
 
@@ -83,19 +83,7 @@ public class JavaLongArray extends AbstractLongArray {
 	public int size() {
 		return size;
 	}
-
-	@Override
-	public int indexOf(long element) {
-		final int n = size();
-		for (int i = 0; i < n; i++) {
-			if (element == array[i]) {
-				return i;
-			}
-		}
-		
-		return -1;
-	}
-
+	
 	@Override
 	public String toString() {
 		StringBuilder result = new StringBuilder();

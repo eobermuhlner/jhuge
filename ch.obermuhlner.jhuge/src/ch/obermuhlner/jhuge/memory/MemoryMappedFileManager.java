@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import ch.obermuhlner.jhuge.collection.internal.JavaLongArray;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveLongArray;
 import ch.obermuhlner.jhuge.collection.internal.LongArray;
 
 /**
@@ -63,7 +63,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * 
 	 * This list must be tracked in order for {@link #findFreeBlock2(int)} to find a free block.
 	 */
-	private final LongArray freeBlocksList = new JavaLongArray();
+	private final LongArray freeBlocksList = new PrimitiveLongArray();
 	
 	/**
 	 * The list of allocated blocks, or <code>null</code>.
@@ -71,7 +71,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 * This list must not be tracked, since we assume that the client code remembers which addresses he has allocated.
 	 * In {@link #DEBUG} mode this is tracked so that additional information can be verified and printed.
 	 */
-	private final LongArray allocatedBlocksList = DEBUG ? new JavaLongArray() : null;
+	private final LongArray allocatedBlocksList = DEBUG ? new PrimitiveLongArray() : null;
 	
 	/**
 	 * The address of the fake {@link #EMPTY_BLOCK_DATA}.

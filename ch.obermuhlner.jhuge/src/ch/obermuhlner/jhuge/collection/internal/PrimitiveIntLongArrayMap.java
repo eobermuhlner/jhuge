@@ -7,23 +7,23 @@ import java.util.Map;
 /**
  * A map where the keys are <code>int</code> and the values are <code>long[]</code> based by a standard Java {@link Map}.
  */
-public class JavaIntLongArrayMap implements IntLongArrayMap {
+public class PrimitiveIntLongArrayMap implements IntLongArrayMap {
 
 	private Map<Integer, long[]> map;
 
 	/**
-	 * Construct a {@link JavaIntLongArrayMap}.
+	 * Construct a {@link PrimitiveIntLongArrayMap}.
 	 */
-	public JavaIntLongArrayMap() {
+	public PrimitiveIntLongArrayMap() {
 		this(8);
 	}
 	
 	/**
-	 * Construct a {@link JavaIntLongArrayMap} with the specified capacity.
+	 * Construct a {@link PrimitiveIntLongArrayMap} with the specified capacity.
 	 * 
 	 * @param capacity the initial capacity 
 	 */
-	public JavaIntLongArrayMap(int capacity) {
+	public PrimitiveIntLongArrayMap(int capacity) {
 		map = new HashMap<Integer, long[]>(capacity);
 	}
 	
