@@ -30,6 +30,16 @@ public interface LongArray {
 	void add(long value);
 	
 	/**
+	 * Adds a value in ascending order.
+	 * 
+	 * <p>The implementation works only correctly if all values in the array are already sorted.
+	 * The easiest way to achieve this is to only use this method to add values to the array.</p>
+	 * 
+	 * @param value the value to insert
+	 */
+	void addAscending(long value);
+	
+	/**
 	 * Returns the value at the specified index position.
 	 * 
 	 * @param index the index position to get
@@ -58,10 +68,19 @@ public interface LongArray {
 	int size();
 	
 	/**
-	 * Returns the index of the first occurrence of the specified element.
+	 * Returns the index of the first occurrence of the specified value.
 	 * 
-	 * @param element the element to search for
+	 * @param value the value to search for
 	 * @return the index of the first occurrence, or -1 if not found
 	 */
-	int indexOf(long element);
+	int indexOf(long value);
+	
+	/**
+	 * Returns the values of this {@link LongArray} as an <code>long[]</code>.
+	 * 
+	 * <p>The returned array is a copy of the content and can be modified without influencing the actual values of this {@link IntArray}.</p>
+	 * 
+	 * @return the values as <code>long[]</code>
+	 */
+	long[] toArray();
 }

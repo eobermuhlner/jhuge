@@ -16,4 +16,27 @@ public abstract class AbstractIntArray implements IntArray {
 		
 		return -1;
 	}
+	
+	@Override
+	public void addAscending(int value) {
+		// TODO binary search
+		final int n = size();
+		for (int i = 0; i < n; i++) {
+			if (get(i) >= value) {
+				add(i, value);
+				return;
+			}
+		}
+		add(value);
+	}
+	
+	@Override
+	public int[] toArray() {
+		final int n = size();
+		int[] result = new int[n];
+		for (int i = 0; i < n; i++) {
+			result[i] = get(i);
+		}
+		return result;
+	}
 }
