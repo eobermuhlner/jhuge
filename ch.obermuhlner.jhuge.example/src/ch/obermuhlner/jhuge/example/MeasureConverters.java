@@ -60,7 +60,7 @@ public class MeasureConverters {
 		
 		System.out.println("## Compressing Converters");
 		
-		System.out.println("Uses the following data:");
+		System.out.println("To measure the compressing converters the following randomly generated data was used:");
 		System.out.println("```");
 		System.out.println(createLongString(200));
 		System.out.println("```");
@@ -134,8 +134,8 @@ public class MeasureConverters {
 		measureSerialize(converter, new double[] { 1.1, 2.2, 3.3 });
 		measureSerialize(converter, new boolean[] { });
 		measureSerialize(converter, new boolean[] { true, false, true});
-		measureSerialize(converter, new boolean[] { true, false, true, false, true, true, false });
 		measureSerialize(converter, new boolean[] { true, false, true, false, true, true, false, true });
+		measureSerialize(converter, new boolean[] { true, false, true, false, true, true, false, true, false });
 		measureSerialize(converter, new char[] { });
 		measureSerialize(converter, new char[] { 'a', 'b', 'c' });
 		measureSerialize(converter, new String[] { });
