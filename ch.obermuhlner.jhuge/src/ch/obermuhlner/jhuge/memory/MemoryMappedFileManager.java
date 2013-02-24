@@ -2,11 +2,12 @@ package ch.obermuhlner.jhuge.memory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import ch.obermuhlner.jhuge.collection.internal.PrimitiveLongArray;
+import ch.obermuhlner.jhuge.collection.internal.IntArray;
 import ch.obermuhlner.jhuge.collection.internal.LongArray;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveIntArray;
+import ch.obermuhlner.jhuge.collection.internal.PrimitiveLongArray;
 
 /**
  * Uses {@link ByteBuffer#allocateDirect(int) direct mapped buffers} to store the managed memory blocks outside of the Java heap.
@@ -240,7 +241,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 		allocatedBlocks--;
 		freeBytes += length;
 		usedBytes -= length;
-		freeBlocksList.add(address);
+		freeBlocksList.addAscending(address);
 		
 		if (compactAfterFree) {
 			compact();
@@ -255,16 +256,9 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	 */
 	public void compact() {
 		int n = freeBlocksList.size();
-		// TODO sort freeBlocks as soon as LongArray.sort() is available
-		List<Long> addresses = new ArrayList<Long>(n);
-		for (int i = 0; i < n; i++) {
-			addresses.add(freeBlocksList.get(i));
-		}
-		
-		Collections.sort(addresses);
-		for (int i = addresses.size()-1; i > 0; i--) {
-			long leftAddress = addresses.get(i - 1);
-			long rightAddress = addresses.get(i);
+		for (int i = n-1; i > 0; i--) {
+			long leftAddress = freeBlocksList.get(i - 1);
+			long rightAddress = freeBlocksList.get(i);
 			
 			if (isSameBuffer(leftAddress, rightAddress)) {
 				int leftLength = getLengthOfFreeBlock(leftAddress);
@@ -274,7 +268,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 				if (calulatedAddressAfterLeft == rightAddress) {
 					int combinedLength = leftLength + 4 + rightLength;
 					setLength(leftAddress, combinedLength);
-					freeBlocksList.remove(freeBlocksList.indexOf(rightAddress)); // TODO just freeBlocks.remove(i) as soon as LongArray.sort() is available
+					freeBlocksList.remove(i);
 					freeBytes += 4;
 				} else {
 					if (calulatedAddressAfterLeft > rightAddress) {
@@ -436,16 +430,17 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 	/**
 	 * Returns the sizes of the free memory blocks.
 	 * 
-	 * @return a snapshot of the sizes of the the free memory blocks
+	 * @return a snapshot of the sizes of the the free memory blocks in ascending order (smallest blocks first)
 	 */
-	public List<Integer> getFreeBlockSizes() {
+	public int[] getFreeBlockSizes() {
 		int n = freeBlocksList.size();
-		ArrayList<Integer> snapshot = new ArrayList<Integer>(n);
-		for (int i = 0; i < freeBlocksList.size(); i++) {
-			snapshot.add(getLengthOfFreeBlock(freeBlocksList.get(i)));
-		}
-		Collections.sort(snapshot);
-		return snapshot;
+		
+		IntArray result = new PrimitiveIntArray(n);
+		for (int i = 0; i < n; i++) {
+			result.addAscending(getLengthOfFreeBlock(freeBlocksList.get(i)));
+		}	
+		
+		return result.toArray();
 	}
 	
 	@Override
@@ -578,7 +573,7 @@ public class MemoryMappedFileManager extends AbstractMemoryManager {
 
 	private void addFreeBlock(long address, int length) {
 		if (DEBUG) checkBlockLength(address, length);
-		freeBlocksList.add(address);
+		freeBlocksList.addAscending(address);
 		
 		freeBytes += length;
 		usedBytes -= length;

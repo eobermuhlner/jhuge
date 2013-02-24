@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.Random;
 
 import org.junit.Test;
+import static ch.obermuhlner.jhuge.converter.AbstractSerializableConverterTest.assertArrayEquals;
 
 /**
  * Tests {@link MemoryMappedFileManager}.
@@ -39,20 +40,20 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(20, memoryManager.getUsedBytes());
 		assertEquals(200-4-20-4, memoryManager.getFreeBytes());
 		assertEquals(200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4-20-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4-20-4 }, memoryManager.getFreeBlockSizes());
 		
 		memoryManager.free(address1);
 		assertEquals(0, memoryManager.getAllocatedBlocks());
 		assertEquals(2, memoryManager.getFreeBlocks());
 		assertEquals(200-4-4, memoryManager.getFreeBytes());
 		assertEquals(200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(20, 200-4-20-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 20, 200-4-20-4 }, memoryManager.getFreeBlockSizes());
 		
 		memoryManager.compact();
 		assertEquals(1, memoryManager.getFreeBlocks());
 		assertEquals(200-4, memoryManager.getFreeBytes());
 		assertEquals(200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4 }, memoryManager.getFreeBlockSizes());
 		
 		long address2 = memoryManager.allocate(60); // allocated from buffer #1
 		assertEquals(60, memoryManager.read(address2).length);
@@ -61,7 +62,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(60, memoryManager.getUsedBytes());
 		assertEquals(200-4-60-4, memoryManager.getFreeBytes());
 		assertEquals(200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4-60-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4-60-4 }, memoryManager.getFreeBlockSizes());
 
 		long address3 = memoryManager.allocate(150); // need to create buffer #2
 		assertEquals(150, memoryManager.read(address3).length);
@@ -70,7 +71,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(60+150, memoryManager.getUsedBytes());
 		assertEquals(200-4-60-4 +200-4-150-4, memoryManager.getFreeBytes());
 		assertEquals(200 +200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4-150-4, 200-4-60-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4-150-4, 200-4-60-4 }, memoryManager.getFreeBlockSizes());
 		
 		long address4 = memoryManager.allocate(120); // allocated from buffer #1 - with oversize taking the entire free block of buffer #1
 		assertEquals((200-4-60-4), memoryManager.read(address4).length);
@@ -79,7 +80,7 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(60+150+(200-4-60-4), memoryManager.getUsedBytes());
 		assertEquals(0 +200-4-150-4, memoryManager.getFreeBytes());
 		assertEquals(200 +200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4-150-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4-150-4 }, memoryManager.getFreeBlockSizes());
 		
 		memoryManager.reset();
 		assertEquals(0, memoryManager.getAllocatedBlocks());
@@ -87,69 +88,69 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 		assertEquals(0, memoryManager.getUsedBytes());
 		assertEquals(200-4 + 200-4, memoryManager.getFreeBytes());
 		assertEquals(200 +200, memoryManager.getTotalBytes());
-		assertEquals(Arrays.asList(200-4, 200-4), memoryManager.getFreeBlockSizes());
+		assertArrayEquals(new int[] { 200-4, 200-4 }, memoryManager.getFreeBlockSizes());
 	}
 	
 	@Test
 	public void testBufferSize() {
 		MemoryMappedFileManager memoryManager = new MemoryMappedFileManager(200);
 		
-		System.out.println("init      " + memoryManager.getFreeBlockSizes());
+		System.out.println("init      " + freeBlockSizes(memoryManager));
 		
 		long address1 = memoryManager.allocate(100);
-		System.out.println("alloc 100 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc 100 " + freeBlockSizes(memoryManager));
 		
 		long address2 = memoryManager.allocate(96);
-		System.out.println("alloc  96 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc  96 " + freeBlockSizes(memoryManager));
 		
 		long address3 = memoryManager.allocate(30);
-		System.out.println("alloc  30 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc  30 " + freeBlockSizes(memoryManager));
 		
 		long address4 = memoryManager.allocate(30);
-		System.out.println("alloc  30 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc  30 " + freeBlockSizes(memoryManager));
 		
 		memoryManager.compact();
-		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + freeBlockSizes(memoryManager));
 		
 		memoryManager.free(address1);
 		memoryManager.free(address2);
 		memoryManager.free(address3);
 		memoryManager.free(address4);
-		System.out.println("free  all " + memoryManager.getFreeBlockSizes());
+		System.out.println("free  all " + freeBlockSizes(memoryManager));
 		
 		memoryManager.compact();
-		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + freeBlockSizes(memoryManager));
 		
 		memoryManager.reset();
-		System.out.println("reset     " + memoryManager.getFreeBlockSizes());
+		System.out.println("reset     " + freeBlockSizes(memoryManager));
 		System.out.println();
 		
 		// --------------------------
 		
 		long address5 = memoryManager.allocate(5);
-		System.out.println("alloc   5 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc   5 " + freeBlockSizes(memoryManager));
 
 		long address6 = memoryManager.allocate(10);
-		System.out.println("alloc  10 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc  10 " + freeBlockSizes(memoryManager));
 
 		long address7 = memoryManager.allocate(15);
-		System.out.println("alloc  15 " + memoryManager.getFreeBlockSizes());
+		System.out.println("alloc  15 " + freeBlockSizes(memoryManager));
 
 		memoryManager.free(address6);
-		System.out.println("free   10 " + memoryManager.getFreeBlockSizes());
+		System.out.println("free   10 " + freeBlockSizes(memoryManager));
 
 		memoryManager.compact();
-		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + freeBlockSizes(memoryManager));
 
 		memoryManager.free(address5);
 		memoryManager.free(address7);
-		System.out.println("free  all " + memoryManager.getFreeBlockSizes());
+		System.out.println("free  all " + freeBlockSizes(memoryManager));
 
 		memoryManager.compact();
-		System.out.println("compact   " + memoryManager.getFreeBlockSizes());
+		System.out.println("compact   " + freeBlockSizes(memoryManager));
 
 		memoryManager.reset();
-		System.out.println("reset     " + memoryManager.getFreeBlockSizes());
+		System.out.println("reset     " + freeBlockSizes(memoryManager));
 		System.out.println();
 		
 		// --------------------------
@@ -184,11 +185,15 @@ public class MemoryMappedFileManagerTest extends AbstractMemoryManagerTest {
 			
 			if (DEBUG) {
 				System.out.println("Alloc: " + blocks.size());
-				System.out.println("Free : " + memoryManager.getFreeBlockSizes());
+				System.out.println("Free : " + freeBlockSizes(memoryManager));
 				long overheadBytes = memoryManager.getTotalBytes() - memoryManager.getUsedBytes() - memoryManager.getFreeBytes();
 				System.out.printf("Memory used=%10d free=%10d total=%10d overhead=%10d allocated blocks=%5d free blocks=%5d\n", memoryManager.getUsedBytes(), memoryManager.getFreeBytes(), memoryManager.getTotalBytes(), overheadBytes, memoryManager.getAllocatedBlocks(), memoryManager.getFreeBlocks());
 				System.out.println();
 			}
 		}
+	}
+
+	private String freeBlockSizes(MemoryMappedFileManager memoryManager) {
+		return Arrays.toString(memoryManager.getFreeBlockSizes());
 	}
 }
