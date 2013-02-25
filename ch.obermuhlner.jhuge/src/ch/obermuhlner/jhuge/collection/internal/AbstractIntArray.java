@@ -19,15 +19,23 @@ public abstract class AbstractIntArray implements IntArray {
 	
 	@Override
 	public void addAscending(int value) {
-		// TODO binary search
-		final int n = size();
-		for (int i = 0; i < n; i++) {
-			if (get(i) >= value) {
-				add(i, value);
-				return;
+		int minIndex = 0;
+		int maxIndex = size() - 1;
+		
+		while (minIndex < maxIndex) {
+			int midIndex = minIndex + (maxIndex - minIndex) / 2;
+			if (get(midIndex) < value) {
+				minIndex = midIndex + 1;
+			} else {
+				maxIndex = midIndex;
 			}
 		}
-		add(value);
+		
+		if (maxIndex == minIndex && get(minIndex) >= value) {
+			add(minIndex, value);
+		} else {
+			add(value);
+		}
 	}
 	
 	@Override

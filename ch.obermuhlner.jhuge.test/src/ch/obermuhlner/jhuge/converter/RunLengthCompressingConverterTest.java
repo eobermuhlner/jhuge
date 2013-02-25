@@ -3,12 +3,8 @@ package ch.obermuhlner.jhuge.converter;
 import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import org.junit.Test;
-
-import ch.obermuhlner.jhuge.converter.CompactConverter;
-import ch.obermuhlner.jhuge.converter.Converter;
 
 /**
  * Tests {@link CompactConverter}.

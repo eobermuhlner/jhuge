@@ -63,20 +63,65 @@ public abstract class AbstractLongArrayTest {
 
 	@Test
 	public void testAddAscending() {
-		LongArray array = createLongArray();
+		{
+			LongArray array = createLongArray();
 
-		array.addAscending(5);
-		array.addAscending(1);
-		array.addAscending(3);
-		array.addAscending(4);
-		array.addAscending(2);
-		
-		assertEquals(5, array.size());
-		assertEquals(1, array.get(0));
-		assertEquals(2, array.get(1));
-		assertEquals(3, array.get(2));
-		assertEquals(4, array.get(3));
-		assertEquals(5, array.get(4));
+			array.addAscending(1);
+			array.addAscending(3);
+			array.addAscending(5);
+			array.addAscending(4);
+			array.addAscending(1);
+			array.addAscending(3);
+			array.addAscending(4);
+			array.addAscending(2);
+			array.addAscending(2);
+			array.addAscending(5);
+
+			assertEquals(10, array.size());
+			assertEquals(1, array.get(0));
+			assertEquals(1, array.get(1));
+			assertEquals(2, array.get(2));
+			assertEquals(2, array.get(3));
+			assertEquals(3, array.get(4));
+			assertEquals(3, array.get(5));
+			assertEquals(4, array.get(6));
+			assertEquals(4, array.get(7));
+			assertEquals(5, array.get(8));
+			assertEquals(5, array.get(9));
+		}
+
+		{
+			LongArray array = createLongArray();
+
+			array.addAscending(1);
+			array.addAscending(1);
+
+			assertEquals(2, array.size());
+			assertEquals(1, array.get(0));
+			assertEquals(1, array.get(1));
+		}
+
+		{
+			LongArray array = createLongArray();
+
+			array.addAscending(1);
+			array.addAscending(2);
+
+			assertEquals(2, array.size());
+			assertEquals(1, array.get(0));
+			assertEquals(2, array.get(1));
+		}
+
+		{
+			LongArray array = createLongArray();
+
+			array.addAscending(2);
+			array.addAscending(1);
+
+			assertEquals(2, array.size());
+			assertEquals(1, array.get(0));
+			assertEquals(2, array.get(1));
+		}
 	}
 	
 	@Test

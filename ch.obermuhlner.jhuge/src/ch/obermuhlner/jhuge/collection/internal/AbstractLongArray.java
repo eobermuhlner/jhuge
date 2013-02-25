@@ -19,23 +19,23 @@ public abstract class AbstractLongArray implements LongArray {
 	
 	@Override
 	public void addAscending(long value) {
-//		int minIndex = 0;
-//		int maxIndex = size() - 1;
-//		
-//		while (maxIndex >= minIndex) {
-//			int midIndex = minIndex + (maxIndex - minIndex) / 2;
-//			if (get(midIndex ))
-//		}
+		int minIndex = 0;
+		int maxIndex = size() - 1;
 		
-		// TODO binary search
-		final int n = size();
-		for (int i = 0; i < n; i++) {
-			if (get(i) >= value) {
-				add(i, value);
-				return;
+		while (minIndex < maxIndex) {
+			int midIndex = minIndex + (maxIndex - minIndex) / 2;
+			if (get(midIndex) < value) {
+				minIndex = midIndex + 1;
+			} else {
+				maxIndex = midIndex;
 			}
 		}
-		add(value);
+		
+		if (maxIndex == minIndex && get(minIndex) >= value) {
+			add(minIndex, value);
+		} else {
+			add(value);
+		}
 	}
 	
 	@Override
