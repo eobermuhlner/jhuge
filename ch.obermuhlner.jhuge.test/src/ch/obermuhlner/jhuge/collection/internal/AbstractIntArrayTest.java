@@ -268,6 +268,51 @@ public abstract class AbstractIntArrayTest {
 		
 		assertNotNull(array.toString());
 	}
+
+	@Test
+	public void testHashCode() {
+		IntArray array0 = createIntArray();
+
+		IntArray array1 = createIntArray();
+		array1.add(0);
+
+		// not really guaranteed, but if this fails then the hashCode() is really badly implemented
+		assertEquals(false, array0.hashCode() == array1.hashCode());
+	}
+	
+
+	@Test
+	public void testEquals() {
+		{
+			IntArray array = createIntArray();
+
+			assertEquals(false, array.equals(null)); // null - not equals
+			assertEquals(false, array.equals("and now something completely different")); // different type - not equals
+			assertEquals(true, array.equals(createIntArray())); // other empty instance - still equals
+			assertEquals(true, array.equals(createIntArray(77))); // different capacity - still equals
+		}
+		
+		{
+			IntArray array1 = createIntArray();
+			array1.add(1);
+			array1.add(2);
+			array1.add(3);
+
+			IntArray array2 = createIntArray();
+			array2.add(1);
+			array2.add(2);
+			array2.add(99);
+
+			IntArray array3 = createIntArray();
+			array3.add(1);
+			array3.add(2);
+			array3.add(3);
+
+			assertEquals(false, array1.equals(createIntArray())); // different size - not equals
+			assertEquals(false, array1.equals(array2)); // different content - not equals
+			assertEquals(true, array1.equals(array3)); // same content - equals
+		}
+	}
 	
 	@Test
 	public void testLarge() {
