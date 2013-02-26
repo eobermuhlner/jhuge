@@ -270,6 +270,56 @@ public abstract class AbstractLongArrayTest {
 	}
 	
 	@Test
+	public void testHashCode() {
+		LongArray array0 = createLongArray();
+
+		LongArray array1 = createLongArray();
+		array1.add(0);
+
+		LongArray array2 = createLongArray();
+		array2.add(Long.MAX_VALUE);
+
+		// not really guaranteed, but if this fails then the hashCode() is really badly implemented
+		assertEquals(false, array0.hashCode() == array1.hashCode());
+		assertEquals(false, array0.hashCode() == array2.hashCode());
+		assertEquals(false, array1.hashCode() == array2.hashCode());
+	}
+	
+
+	@Test
+	public void testEquals() {
+		{
+			LongArray array = createLongArray();
+
+			assertEquals(false, array.equals(null)); // null - not equals
+			assertEquals(false, array.equals("and now something completely different")); // different type - not equals
+			assertEquals(true, array.equals(createLongArray())); // other empty instance - still equals
+			assertEquals(true, array.equals(createLongArray(77))); // different capacity - still equals
+		}
+		
+		{
+			LongArray array1 = createLongArray();
+			array1.add(1);
+			array1.add(2);
+			array1.add(3);
+
+			LongArray array2 = createLongArray();
+			array2.add(1);
+			array2.add(2);
+			array2.add(99);
+
+			LongArray array3 = createLongArray();
+			array3.add(1);
+			array3.add(2);
+			array3.add(3);
+
+			assertEquals(false, array1.equals(createLongArray())); // different size - not equals
+			assertEquals(false, array1.equals(array2)); // different content - not equals
+			assertEquals(true, array1.equals(array3)); // same content - equals
+		}
+	}
+
+	@Test
 	public void testLarge() {
 		LongArray array = createLongArray();
 		

@@ -47,4 +47,42 @@ public abstract class AbstractLongArray implements LongArray {
 		}
 		return result;
 	}
+	
+	@Override
+	public int hashCode() {
+		final int n = size();
+		int hash = 1;
+
+		for (int i = 0; i < n; i++) {
+			long elementValue = get(i);
+            int elementHash = (int)(elementValue ^ (elementValue >>> 32));
+			hash = hash * 31 + elementHash;
+		}
+		
+		return hash;
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) {
+			return true;
+		}
+		if (!(object instanceof LongArray)) {
+			return false;
+		}
+		
+		LongArray other = (LongArray) object;
+
+		final int n = size();
+		if (other.size() != n) {
+			return false;
+		}
+		for (int i = 0; i < n; i++) {
+			if (other.get(i) != get(i)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
 }
