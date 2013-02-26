@@ -31,7 +31,7 @@ public class PlanetInformation {
 		initialUsedMemory = totalMemory - freeMemory;
 	}
 	
-	private void reset(boolean useHeap) {
+	private void reset(boolean useHeap, boolean compressed) {
 		nextPlanetId = 0;
 		
 		if (useHeap) {
@@ -39,6 +39,9 @@ public class PlanetInformation {
 			
 		} else {
 			Builder<Integer, PlanetInfo> builder = new HugeHashMap.Builder<Integer, PlanetInfo>();
+			if (compressed) {
+				builder.compressValue();
+			}
 			planetMap = builder.build();
 		}
 		
@@ -84,12 +87,13 @@ public class PlanetInformation {
 			System.out.println("  exit");
 			System.out.println("  heap");
 			System.out.println("  reset onheap");
-			System.out.println("  reset offheap");
+			System.out.println("  reset offheap [compressed]");
 			System.out.println("  info");
 			System.out.println("  more");
 			System.out.println("  planets");
 			System.out.println("  planet id <id>");
 			System.out.println("  planet name <id>");
+			System.out.println("  search <text>");
 
 		} else if (command[0].equals("exit")) {
 			System.out.println("Goodbye.");
@@ -107,9 +111,20 @@ public class PlanetInformation {
 			System.out.println("Additional Used : " + additionalUsedMemory + " bytes (" + asMegaBytes(additionalUsedMemory) + " MB)");
 			
 		} else if (command[0].equals("reset")) {
-			boolean useHeap = command.length > 1 ? "onheap".equals(command[1]) : false;
-			reset(useHeap);
-			System.out.println("Resetted to use " + (useHeap ? "onheap" : "offheap") + " storage.");
+			boolean useHeap = false;
+			boolean compressed = false;
+			int arg = 1;
+			while (arg < command.length) {
+				if ("onheap".equals(command[arg])) {
+					useHeap = true;
+				}
+				if ("compressed".equals(command[arg])) {
+					compressed = true;
+				}
+				arg++;
+			}
+			reset(useHeap, compressed);
+			System.out.println("Resetted use heap=" + useHeap + ", compressed=" + compressed);
 			
 		} else if (command[0].equals("info")) {
 			System.out.println(planetMap.size() + " planets found.");
@@ -127,6 +142,15 @@ public class PlanetInformation {
 		} else if (command[0].equals("planet") && command[1].equals("id")) {
 			PlanetInfo planetInfo = planetMap.get(Integer.parseInt(command[2]));
 			print(planetInfo);
+			
+		} else if (command[0].equals("search")) {
+			String string = command[1];
+			for (Entry<Integer, PlanetInfo> entry : planetMap.entrySet()) {
+				PlanetInfo planetInfo = entry.getValue();
+				if (planetInfo.getDescription().contains(string)) {
+					print(planetInfo);
+				}
+			}
 			
 		} else {
 			System.out.println("Unknown command: " + Arrays.toString(command));
@@ -167,7 +191,7 @@ public class PlanetInformation {
 	 */
 	public static void main(String[] args) {
 		PlanetInformation planetInformation = new PlanetInformation();
-		planetInformation.reset(false);
+		planetInformation.reset(false, false);
 		planetInformation.runShell();
 	}
 	
@@ -189,25 +213,118 @@ public class PlanetInformation {
 		description.append(name);
 		description.append(" is ");
 		description.append(choose(random, "boring", "interesting", "colorful", "bleak", "deadly", "exotic"));
-		description.append(".");
+		description.append(". ");
 		
-				
+		description.append("The population of ");
+		if (random.nextInt(10) > 5) {
+			description.append(random.nextInt(10));
+			description.append(" billion ");
+		} else {
+			description.append(random.nextInt(999));
+			description.append(" million ");
+		}
+		description.append(choose(random, "tiny", "small", "medium sized", "large", "huge"));
+		description.append(" ");
+		description.append(choose(random, "red", "green", "blue", "yellow", "black", "white", "pink", "brown", "transparent"));
+		description.append(" ");
+		description.append(choose(random, "humanoids", "centaurs", "slime balls", "reptils", "amphibians", "elephantoids", "insects", "insectoids", "arachnids", "bug eyed monsters", "shape shifters", "intelligent gas clouds"));
+		description.append(" is ");
+		description.append(choose(random, "very productive", "lazy", "friendly", "unfriendly", "aggressive", "constantly waging war", "not interested in visitors"));
+		description.append(".\n");
+
+		description.append("The ");
+		if (random.nextInt(10) > 5) {
+			description.append(choose(random, "food is", "drinks are", "architecture is"));
+		} else {
+			description.append("national dish of ");
+			description.append(choose(random, "fried", "cooked", "boiled", "raw"));
+			description.append(" ");
+			if (random.nextInt(10) > 4) {
+				description.append(choose(random, "tourists", "enemies", "stepmothers", "lawyers"));
+			} else {
+				description.append(randomName(random));
+			}
+			description.append(" is");
+		}
+		description.append(" ");
+		description.append(choose(random, "bland", "exotic", "interesting", "recommended", "famous", "definitely worth a try", "to be avoided at all costs"));
+		description.append(".\n");
+
+		for (int i = 0; i < random.nextInt(10) + 2; i++) {
+			int r = random.nextInt(10);
+			if (r < 2) {
+				description.append(choose(random, "Before", "After", "Instead of"));
+				description.append(" ");
+				if (random.nextInt(10) < 7) {
+					description.append(choose(random, "visiting", "seeing", "killing", "observing"));
+				} else {
+					description.append(randomName(random) + "ing");
+				}
+				description.append(" the ");
+				description.append(randomName(random));
+				description.append(" you ");
+				description.append(choose(random, "should", "should not", "should not miss", "miss", "should under no circumstances", "must", "must never", "will never again"));
+				description.append(" ");
+				description.append(randomName(random));
+				description.append(" the ");
+				description.append(randomName(random));
+				description.append(".\n");
+			} else if (r < 8) {
+				description.append(choose(random, "Don't", "Never", "Especially", "We recommend to", "You should", "You should not", "You must", "You must not", "Under no circumstances should you"));
+				description.append(" ");
+				if (random.nextInt(10) < 7) {
+					description.append(choose(random, "forget", "miss", "avoid", "visit", "concentrate on"));
+				} else {
+					description.append(randomName(random));
+				}
+				description.append(" the ");
+				description.append(randomName(random));
+				if (random.nextInt(10) < 5) {
+					description.append(" or ");
+					description.append(randomName(random));
+				}
+				description.append(" ");
+				description.append(choose(random, "if you", "unless you"));
+				description.append(" ");
+				description.append(choose(random, "hate", "like", "don't like", "enjoy", "cannot stand", "prefer", "really like"));
+				description.append(" ");
+				description.append(randomName(random));
+				description.append(".\n");
+			} else {
+				description.append(choose(random, "Especially the", "The", "Famous", "Infamous", "Glorious"));
+				description.append(" ");
+				description.append(randomName(random));
+				description.append(" ");
+				description.append(choose(random, "is", "is not", "is maybe"));
+				description.append(" ");
+				description.append(choose(random, "worth a", "a must"));
+				description.append(" ");
+				description.append(choose(random, "look", "visit", "day trip", "trip"));
+				description.append(" for ");
+				description.append(choose(random, "modern", "well travelled", "old fashioned", "optimistic", "pessimistic"));
+				description.append(" ");
+				if (random.nextInt(100) < 90) {
+					description.append(choose(random, "men", "women", "visitors", "artists", "nerds", "geeks", "fashionistas", "sport enthusiasts"));
+				} else {
+					description.append(randomName(random) + "s");
+				}
+				description.append(".\n");
+			}
+		}
+		
 		return new PlanetInfo(x, y, z, id, name, description.toString());
 	}
 	
 	private static String randomName(Random random) {
 		StringBuilder result = new StringBuilder();
 
-		if (random.nextInt(500) == 0) {
-			result.append(choose(random, "qu"));
-		}
 		if (random.nextInt(5) == 0) {
-			result.append(choose(random, "a", "e", "i", "o", "u", "y"));
+			result.append(choose(random, "a", "e", "i", "o", "u"));
 		}
 		int syllabes = random.nextInt(3) + 2;
 		for (int i = 0; i < syllabes; i++) {
 			result.append(choose(random, "b", "c", "d", "g", "h", "k", "p", "qu", "t", "x", "z"));
-			result.append(choose(random, "a", "e", "i", "o", "u", "y"));
+			result.append(choose(random, "a", "e", "i", "o", "u"));
 			if (random.nextInt(3) == 0) {
 				result.append(choose(random, "f", "l", "m", "n", "r", "s"));
 			}
