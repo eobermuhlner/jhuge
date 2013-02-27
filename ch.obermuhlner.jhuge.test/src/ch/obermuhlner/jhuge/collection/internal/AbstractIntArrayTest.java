@@ -301,16 +301,16 @@ public abstract class AbstractIntArrayTest {
 			IntArray array2 = createIntArray();
 			array2.add(1);
 			array2.add(2);
-			array2.add(99);
+			array2.add(3);
 
-			IntArray array3 = createIntArray();
-			array3.add(1);
-			array3.add(2);
-			array3.add(3);
+			IntArray arrayDiff = createIntArray();
+			arrayDiff.add(1);
+			arrayDiff.add(2);
+			arrayDiff.add(99);
 
 			assertEquals(false, array1.equals(createIntArray())); // different size - not equals
-			assertEquals(false, array1.equals(array2)); // different content - not equals
-			assertEquals(true, array1.equals(array3)); // same content - equals
+			assertEquals(false, array1.equals(arrayDiff)); // different content - not equals
+			assertEquals(true, array1.equals(array2)); // same content - equals
 		}
 	}
 	
