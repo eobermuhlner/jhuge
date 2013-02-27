@@ -3,6 +3,7 @@ package ch.obermuhlner.jhuge.collection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -89,6 +90,19 @@ public abstract class AbstractListTest extends AbstractCollectionTest {
 			} catch (IndexOutOfBoundsException exception) {
 				// expected
 			}
+		}
+	}
+	
+	/**
+	 * Tests whether the {@link List} under test is equal to another {@link List} class with the same content.
+	 */
+	@Test
+	public void testEquals_List() {
+		{
+			List<String> list1 = createList("a", "b", "c");
+			List<String> list2 = Arrays.asList("a", "b", "c");
+
+			assertEquals(true, list1.equals(list2)); // different class, same content - equals
 		}
 	}
 }

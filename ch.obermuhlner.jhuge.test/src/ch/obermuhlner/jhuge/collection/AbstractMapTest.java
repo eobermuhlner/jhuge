@@ -11,6 +11,7 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -788,6 +789,81 @@ public abstract class AbstractMapTest {
 			Map<Integer, String> map = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
 
 			assertNotNull(map.toString());
+		}
+	}
+
+	@Test
+	public void testHashCode() {
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map1 = createMap();
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map2 = createMap();
+			
+			assertEquals(map1.hashCode(), map1.hashCode());
+			assertEquals(map1.hashCode(), map2.hashCode());
+		}
+
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map0 = createMap();
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map1 = createMap(pair(1, "a"));
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map2 = createMap(pair(1, "a"), pair(2, "b"));
+			
+			// not really guaranteed, but if this fails then the hashCode() is really badly implemented
+			assertEquals(false, map0.hashCode() == map1.hashCode());
+			assertEquals(false, map0.hashCode() == map2.hashCode());
+			assertEquals(false, map1.hashCode() == map2.hashCode());
+		}
+	}
+
+	@Test
+	public void testEquals() {
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map1 = createMap();
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map2 = createMap();
+			
+			assertEquals(false, map1.equals(null)); // null - not equals
+			assertEquals(false, map1.equals("and now something completely different")); // different type - not equals
+			assertEquals(true, map1.equals(map2)); // other empty instance - still equals
+		}
+
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map0 = createMap();
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map1 = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map2 = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> mapDiffKey = createMap(pair(1, "a"), pair(2, "b"), pair(99, "c"));
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> mapDiffValue = createMap(pair(1, "a"), pair(2, "b"), pair(3, "xxx"));
+			
+			assertEquals(false, map1.equals(map0)); // different size - not equals
+			assertEquals(false, map1.equals(mapDiffKey)); // different key - not equals
+			assertEquals(false, map1.equals(mapDiffValue)); // different value - not equals
+			assertEquals(true, map1.equals(map2)); // same content - equals
+		}
+		
+		{
+			@SuppressWarnings("unchecked")
+			Map<Integer, String> map1 = createMap(pair(1, "a"), pair(2, "b"), pair(3, "c"));
+			Map<Integer, String> map2 = new MyMap<Integer, String>(map1);
+
+			assertEquals(true, map1.equals(map2)); // different class, same content - equals			
+		}
+	}
+	
+	private static class MyMap<K, V> extends HashMap<K, V> {
+		private static final long serialVersionUID = 1L;
+
+		public MyMap(Map<? extends K, ? extends V> other) {
+			super(other);
 		}
 	}
 

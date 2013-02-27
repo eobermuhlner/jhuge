@@ -545,6 +545,48 @@ public abstract class AbstractCollectionTest {
 			}
 		}
 	}
+
+	@Test
+	public void testHashCode() {
+		{
+			Collection<String> collection = createCollection();
+			
+			assertEquals(collection.hashCode(), collection.hashCode());
+			assertEquals(collection.hashCode(), createCollection().hashCode());
+		}
+
+		{
+			Collection<String> collection0 = createCollection();
+			Collection<String> collection1 = createCollection("a");
+			Collection<String> collection2 = createCollection("a", "b");
+			
+			// not really guaranteed, but if this fails then the hashCode() is really badly implemented
+			assertEquals(false, collection0.hashCode() == collection1.hashCode());
+			assertEquals(false, collection0.hashCode() == collection2.hashCode());
+			assertEquals(false, collection1.hashCode() == collection2.hashCode());
+		}
+	}
+
+	@Test
+	public void testEquals() {
+		{
+			Collection<String> collection = createCollection();
+			
+			assertEquals(false, collection.equals(null)); // null - not equals
+			assertEquals(false, collection.equals("and now something completely different")); // different type - not equals
+			assertEquals(true, collection.equals(createCollection())); // other empty instance - still equals
+		}
+
+		{
+			Collection<String> collection1 = createCollection("a", "b", "c");
+			Collection<String> collection2 = createCollection("a", "b", "c");
+			Collection<String> collectionDiff = createCollection("a", "b", "xxx");
+
+			assertEquals(false, collection1.equals(createCollection())); // different size - not equals
+			assertEquals(false, collection1.equals(collectionDiff)); // different content - not equals
+			assertEquals(true, collection1.equals(collection2)); // same content - equals
+		}
+	}
 	
 	@Test
 	public void testToString() {
