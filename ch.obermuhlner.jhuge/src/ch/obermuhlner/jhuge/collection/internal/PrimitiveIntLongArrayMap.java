@@ -62,6 +62,25 @@ public class PrimitiveIntLongArrayMap implements IntLongArrayMap {
 		return new MyIntIterator(map.keySet().iterator());
 	}
 	
+	@Override
+	public int hashCode() {
+		return map.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) {
+			return true;
+		}
+		if (!(object instanceof PrimitiveIntLongArrayMap)) {
+			return false;
+		}
+		
+		PrimitiveIntLongArrayMap other = (PrimitiveIntLongArrayMap) object;
+		
+		return map.equals(other.map);
+	}
+	
 	private static class MyIntIterator implements IntIterator {
 
 		private final Iterator<Integer> iterator;

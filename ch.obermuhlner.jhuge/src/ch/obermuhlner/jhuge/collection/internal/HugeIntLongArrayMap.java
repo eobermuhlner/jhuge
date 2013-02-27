@@ -450,6 +450,57 @@ public class HugeIntLongArrayMap implements IntLongArrayMap {
 	public String toString() {
 		return getClass().getSimpleName() + "{size=" + size() + ", tableSize=" + addresses.size() + ", tableUsed=" + countHashCodes + "}";
 	}
+
+	@Override
+	public int hashCode() {
+		int hash = size();
+		
+		IntIterator keySet = keySet();
+		while (keySet.hasNext()) {
+			int key = keySet.next();
+			long[] value = get(key);
+
+			int entryHash = key + Arrays.hashCode(value);
+			hash += entryHash; // not multiplied with factor - so hash does not depend in order in keySet
+		}		
+		
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) {
+			return true;
+		}
+		if (!(object instanceof HugeIntLongArrayMap)) {
+			return false;
+		}
+		
+		HugeIntLongArrayMap other = (HugeIntLongArrayMap) object;
+		
+		if (size() != other.size()) {
+			return false;
+		}
+		
+		IntIterator keySet = keySet();
+		while (keySet.hasNext()) {
+			int key = keySet.next();
+			long[] value = get(key);
+			
+			if (value == null) {
+				if (!(other.containsKey(key) && other.get(key) == null)) {
+					return false;
+				}
+			} else {
+				long[] otherValue = other.get(key);
+				if (!Arrays.equals(value, otherValue)) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
 	
 	private class MyIntIterator implements IntIterator {
 

@@ -269,6 +269,56 @@ public abstract class AbstractIntLongArrayMapTest {
 	}
 	
 	@Test
+	public void testHashCode() {
+		IntLongArrayMap map0 = createIntLongArrayMap();
+
+		IntLongArrayMap map1 = createIntLongArrayMap();
+		map1.put(1, ARRAY_1);
+
+		// not really guaranteed, but if this fails then the hashCode() is really badly implemented
+		assertEquals(false, map0.hashCode() == map1.hashCode());
+	}
+	
+
+	@Test
+	public void testEquals() {
+		{
+			IntLongArrayMap map = createIntLongArrayMap();
+
+			assertEquals(false, map.equals(null)); // null - not equals
+			assertEquals(false, map.equals("and now something completely different")); // different type - not equals
+			assertEquals(true, map.equals(createIntLongArrayMap())); // other empty instance - still equals
+		}
+		
+		{
+			IntLongArrayMap map1 = createIntLongArrayMap();
+			map1.put(1, ARRAY_1);
+			map1.put(202, ARRAY_2);
+			map1.put(3003, ARRAY_3);
+
+			IntLongArrayMap map2 = createIntLongArrayMap();
+			map2.put(1, ARRAY_1);
+			map2.put(202, ARRAY_2);
+			map2.put(3003, ARRAY_3);
+
+			IntLongArrayMap mapDiffKey = createIntLongArrayMap();
+			mapDiffKey.put(1, ARRAY_1);
+			mapDiffKey.put(202, ARRAY_2);
+			mapDiffKey.put(-3333, ARRAY_3); // different from map1!
+
+			IntLongArrayMap mapDiffValue = createIntLongArrayMap();
+			mapDiffValue.put(1, ARRAY_1);
+			mapDiffValue.put(202, ARRAY_2);
+			mapDiffValue.put(3003, ARRAY_0); // different from map1!
+
+			assertEquals(false, map1.equals(createIntLongArrayMap())); // different size - not equals
+			assertEquals(false, map1.equals(mapDiffKey)); // different key - not equals
+			assertEquals(false, map1.equals(mapDiffValue)); // different value - not equals
+			assertEquals(true, map1.equals(map2)); // same content - equals
+		}
+	}
+
+	@Test
 	public void testLarge() {
 		final int n = 1000;
 		IntLongArrayMap map = createIntLongArrayMap();
