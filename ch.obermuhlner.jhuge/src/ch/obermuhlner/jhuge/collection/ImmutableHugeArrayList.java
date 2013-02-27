@@ -34,8 +34,42 @@ import ch.obermuhlner.jhuge.memory.MemoryManager;
  */
 public class ImmutableHugeArrayList<E> extends AbstractHugeArrayList<E> {
 
+	private int hashCode;
+
 	private ImmutableHugeArrayList(MemoryManager memoryManager, Converter<E> converter, boolean faster, int capacity) {
 		super(memoryManager, converter, faster, capacity);
+	}
+	
+	/**
+	 * Initializes the hashCode.
+	 * 
+	 * Until this method is called the hashCode() and equals() methods are not valid and may not be called.
+	 * Once the Builder is finished with adding all elements he calls initializeHashCode() before this instance is given to the client code.
+	 */
+	private void initializeHashCode() {
+		hashCode = super.hashCode();
+	}
+	
+	@Override
+	public int hashCode() {
+		return hashCode;
+	}
+
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) {
+			return true;
+		}
+		if (object instanceof ImmutableHugeArrayList) {
+			// if it is same class as this then we know that hashCode() is cheap (already initialized) -> fast test for not-equal
+			ImmutableHugeArrayList<?> other = (ImmutableHugeArrayList<?>) object;
+			if (hashCode() != other.hashCode()) {
+				return false;
+			}
+		}
+		
+		return super.equals(object);
 	}
 
 	/**
@@ -139,7 +173,10 @@ public class ImmutableHugeArrayList<E> extends AbstractHugeArrayList<E> {
 				throw new IllegalStateException("Has already been built.");
 			}
 			built = true;
-			return getList();
+			
+			ImmutableHugeArrayList<E> list = getList();
+			list.initializeHashCode();
+			return list;
 		}
 	}
 }
